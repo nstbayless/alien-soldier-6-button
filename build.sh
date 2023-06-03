@@ -8,7 +8,7 @@ m68k-linux-gnu-objcopy --image-base=0x1305 -O binary hack.o hack.bin
 cp ./base.md hack.md
 chmod a+w ./hack.md
 
-symbols=$(m68k-linux-gnu-nm ./hack.o)
+symbols=$(m68k-linux-gnu-nm ./hack.o | sort)
 PREV_SRC_ADDR=""
 PREV_SRC_LABEL=""
 mode=1
@@ -51,3 +51,4 @@ while IFS= read -r line; do
     fi
 done <<< "$symbols"
 
+python3 ./sega_genesis_checksum_utility.py ./hack.md
