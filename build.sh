@@ -41,9 +41,8 @@ while IFS= read -r line; do
             
             count=$(( 0x$address - 0x$PREV_SRC_ADDR ))
             srcdec=$(( 0x$PREV_SRC_ADDR ))
-            echo "copying range $PREV_SRC_ADDR..$address ($srcdec : $count bytes)"
-            
-            dd if="./hack.bin" of="./hack.md" bs=1 seek=$srcdec count=$count conv=notrunc
+            echo "copying ${name#PATCH_END_} -- range $PREV_SRC_ADDR..$address ($srcdec : $count bytes)"
+            dd if="./hack.bin" of="./hack.md" bs=1 skip=$srcdec seek=$srcdec count=$count conv=notrunc
             
             PREV_SRC_ADDR="$address"
             PREV_SRC_LABEL="$name"
