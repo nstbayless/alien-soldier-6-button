@@ -53,6 +53,16 @@ PATCH_BEGIN jump_to_subroutine
     nop
 PATCH_END jump_to_subroutine
 
+.org 0x155B0
+PATCH_BEGIN piss_mode_check
+    jmp 0x05CCF0 /*MyPissModeCheck*/
+PATCH_END piss_mode_check
+
+.org 0x15BB8
+PATCH_BEGIN no_jump_4
+    jmp 0x5CD40
+PATCH_END no_jump_4
+
 .org 0x05CB78
 PATCH_BEGIN_injected_code:
 
@@ -157,5 +167,52 @@ B6Pressed:
 
 .skipToRts2:
     rts
+
+.org 0x05CCF0
+MyPissModeCheck:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .threebuttonpissmode
+    
+.sixbuttonpissmode:
+/* check x */
+    btst #2,(CTRL0_B6_PRESSED)
+    beq .nopissmode
+    jmp 0x15632
+    
+.threebuttonpissmode:
+    /* original code */
+    btst     #6,0x006A(%a5)
+    jmp 0x155B6
+
+.nopissmode:
+    btst     #6,0x006A(%a5)
+    beq .noAButton
+    jmp 0x155C2
+    
+.noAButton:
+    jmp 0x155C8
+    
+.org 0x5CD40
+MyJumpDashCheck:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .threebuttonjumpdash
+
+.sixbuttonjumpdash:
+    /* check z */
+    btst #0,(CTRL0_B6_DOWN)
+    bne .sixbuttondodash
+    btst #5,0x006A(%a5)
+    bne .sixbuttonjump
+    jmp 0x015C1E
+
+.sixbuttonjump:
+    jmp 0x00015BF2
+
+.sixbuttondodash:
+    jmp 0x15BCA
+
+.threebuttonjumpdash:
+    btst #5,0x006A(%a5)
+    jmp 0x00015BBE
     
 PATCH_END_injected_code:
