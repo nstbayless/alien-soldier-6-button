@@ -63,6 +63,21 @@ PATCH_BEGIN no_jump_4
     jmp 0x5CD40
 PATCH_END no_jump_4
 
+.org 0x15d6A
+PATCH_BEGIN air_dash_check
+    jmp 0x5CE00
+PATCH_END air_dash_check
+
+.org 0x160E2
+PATCH_BEGIN air_hang_dash_check
+    jmp 0x5CE50
+PATCH_END air_hang_dash_check
+
+.org 0x16B24
+PATCH_BEGIN counterforce_check
+    jmp 0x5CEA0
+PATCH_END counterforce_check
+
 .org 0x05CB78
 PATCH_BEGIN_injected_code:
 
@@ -215,4 +230,69 @@ MyJumpDashCheck:
     btst #5,0x006A(%a5)
     jmp 0x00015BBE
     
+.org 0x5CE00
+MyAirJumpDashCheck:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .threebuttonairjumpdash
+    
+.sixbuttonairjumpdash:
+    /* Z */
+    btst #0,(CTRL0_B6_DOWN)
+    bne .sixbuttonairdash
+    btst #5,0x006A(%a5)
+    bne .sixbuttonairjump
+    jmp 0x00015D8E
+    
+.sixbuttonairjump:
+    jmp 0x15D7A
+    
+.sixbuttonairdash:
+    jmp 0x00015D84
+   
+.threebuttonairjumpdash:
+    btst #5,0x006A(%a5)
+    jmp 0x00015D70
+   
+.org 0x5CE50
+MyHangDashJumpCheck:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .threebuttonhangjumpdash
+    
+.sixbuttonhangjumpdash:
+    /* Z */
+    btst #0,(CTRL0_B6_DOWN)
+    bne .sixbuttonhangdash
+    btst #5,0x006A(%a5)
+    bne .sixbuttonhangjump
+    jmp 0x16116
+    
+.sixbuttonhangjump:
+    jmp 0x160FA
+    
+.sixbuttonhangdash:
+    jmp 0x00015936
+   
+.threebuttonhangjumpdash:
+    btst #5,0x006A(%a5)
+    jmp 0x160E8
+
+.org 0x5CEA0
+MyCounterforce:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .threebuttoncounterforce
+    
+    /* cool kid counterforce */
+    /* Y */
+    btst #1,(CTRL0_B6_DOWN)
+    beq .nocounterforce
+    jmp 0x00016B32
+    
+.threebuttoncounterforce:
+    subq.w #1,0x826A
+    bmi .nocounterforce
+    jmp 0x00016B32
+
+.nocounterforce:
+    jmp 0x16B3A
+   
 PATCH_END_injected_code:
