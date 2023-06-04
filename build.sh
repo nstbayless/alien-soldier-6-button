@@ -52,3 +52,5 @@ while IFS= read -r line; do
 done <<< "$symbols"
 
 python3 ./sega_genesis_checksum_utility.py ./hack.md
+
+./flips/flips-linux -c ./base.md ./hack.md ./hack.ips

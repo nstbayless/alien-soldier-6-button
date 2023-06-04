@@ -21,6 +21,13 @@ CTRL0_B6_RELEASED = 0xFFF70B
 CTRL1_DATA = 0x00A10003
 CTRL1_CTRL = 0x00A10009
 
+/* disable region lock */
+.org 0x34E
+    PATCH_BEGIN skip_region_lock
+    nop
+    PATCH_END skip_region_lock
+
+/* disable checksum check */
 .org 0x36C
     PATCH_BEGIN skip_checksum_death
     nop
@@ -214,7 +221,7 @@ MyJumpDashCheck:
 
 .sixbuttonjumpdash:
     /* check z */
-    btst #0,(CTRL0_B6_DOWN)
+    btst #0,(CTRL0_B6_PRESSED)
     bne .sixbuttondodash
     btst #5,0x006A(%a5)
     bne .sixbuttonjump
@@ -237,7 +244,7 @@ MyAirJumpDashCheck:
     
 .sixbuttonairjumpdash:
     /* Z */
-    btst #0,(CTRL0_B6_DOWN)
+    btst #0,(CTRL0_B6_PRESSED)
     bne .sixbuttonairdash
     btst #5,0x006A(%a5)
     bne .sixbuttonairjump
@@ -260,7 +267,7 @@ MyHangDashJumpCheck:
     
 .sixbuttonhangjumpdash:
     /* Z */
-    btst #0,(CTRL0_B6_DOWN)
+    btst #0,(CTRL0_B6_PRESSED)
     bne .sixbuttonhangdash
     btst #5,0x006A(%a5)
     bne .sixbuttonhangjump
@@ -283,7 +290,7 @@ MyCounterforce:
     
     /* cool kid counterforce */
     /* Y */
-    btst #1,(CTRL0_B6_DOWN)
+    btst #1,(CTRL0_B6_PRESSED)
     beq .nocounterforce
     jmp 0x00016B32
     
