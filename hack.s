@@ -11,6 +11,8 @@
     .byte 0x71
 .endm
 
+/* just so you know, the B6_ names are meaningless now. Ignore the names. */
+
 CTRL0_DOWN = 0xFFF706
 CTRL0_B6_DOWN = 0xFFF707
 CTRL0_PRESSED = 0xFFF708
@@ -27,12 +29,6 @@ CTRL1_CTRL = 0x00A10009
     nop
     nop
     PATCH_END skip_checksum_death
-
-/* disable region lock */
-.org 0x44E
-    PATCH_BEGIN skip_region_lock
-    nop
-    PATCH_END skip_region_lock
 
 .org 0x33a8
     PATCH_BEGIN read_controller_init
@@ -60,6 +56,21 @@ PATCH_BEGIN jump_to_subroutine
     nop
 PATCH_END jump_to_subroutine
 
+.org 0xA60C
+    PATCH_BEGIN fix_password_dir_up
+    moveq #1,%d0
+    PATCH_END fix_password_dir_up
+
+.org 0xA622
+    PATCH_BEGIN fix_password_dir_down
+    moveq #-1,%d0
+    PATCH_END fix_password_dir_down
+
+.org 0x15168
+PATCH_BEGIN pit_mode_buttons
+    jmp 0x5D020
+PATCH_END pit_mode_buttons
+
 .org 0x155B0
 PATCH_BEGIN piss_mode_check
     jmp 0x05CCF0 /*MyPissModeCheck*/
@@ -69,6 +80,11 @@ PATCH_END piss_mode_check
 PATCH_BEGIN no_jump_4
     jmp 0x5CD40
 PATCH_END no_jump_4
+
+.org 0x15C20
+PATCH_BEGIN reverse_dash_check
+    jmp 0x5D0E0
+PATCH_END reverse_dash_check
 
 .org 0x15d6A
 PATCH_BEGIN air_dash_check
@@ -80,17 +96,31 @@ PATCH_BEGIN air_hang_dash_check
     jmp 0x5CE50
 PATCH_END air_hang_dash_check
 
+.org 0x1615C
+PATCH_BEGIN air_hang_piss_mode_check
+    jmp 0x5CF50
+PATCH_END air_hang_piss_mode_check
+
+.org 0x166EA
+PATCH_BEGIN reverse_piss_check  
+    jmp 0x5D080
+PATCH_END reverse_piss_check
+
 .org 0x16B0A
 PATCH_BEGIN copy_controls
     nop
     jmp 0x5CF00
 PATCH_END copy_controls
 
-
 .org 0x16B24
 PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
 PATCH_END counterforce_check
+
+.org 0x16DA6
+PATCH_BEGIN pit_remove
+    
+PATCH_END pit_remove
 
 .org 0x05CB78
 PATCH_BEGIN_injected_code:
@@ -203,13 +233,18 @@ B6Pressed:
 
 .org 0x05CCF0
 MyPissModeCheck:
-    btst #7,(CTRL0_B6_DOWN)
+    btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonpissmode
     
 .sixbuttonpissmode:
+/* check mode */
+    btst #3,(CTRL0_B6_RELEASED)
+    bne .yespissmode
 /* check x */
     btst #2,(CTRL0_B6_RELEASED)
     beq .nopissmode
+    
+.yespissmode:
     jmp 0x15632
     
 .threebuttonpissmode:
@@ -225,9 +260,9 @@ MyPissModeCheck:
 .noAButton:
     jmp 0x155C8
     
-.org 0x5CD40
+.org 0x5CD60
 MyJumpDashCheck:
-    btst #7,(CTRL0_B6_DOWN)
+    btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonjumpdash
 
 .sixbuttonjumpdash:
@@ -250,15 +285,20 @@ MyJumpDashCheck:
     
 .org 0x5CE00
 MyAirJumpDashCheck:
-    btst #7,(CTRL0_B6_DOWN)
+    btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonairjumpdash
     
 .sixbuttonairjumpdash:
+
+    /* check piss mode, too */
+    jsr 0x5CFE0 /*CheckPissMode*/
+
     /* Z */
     btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttonairdash
     btst #5,0x006A(%a5)
     bne .sixbuttonairjump
+    /* no air jump */
     jmp 0x00015D8E
     
 .sixbuttonairjump:
@@ -273,7 +313,7 @@ MyAirJumpDashCheck:
    
 .org 0x5CE50
 MyHangDashJumpCheck:
-    btst #7,(CTRL0_B6_DOWN)
+    btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonhangjumpdash
     
 .sixbuttonhangjumpdash:
@@ -296,7 +336,7 @@ MyHangDashJumpCheck:
 
 .org 0x5CEA0
 MyCounterforce:
-    btst #7,(CTRL0_B6_DOWN)
+    btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttoncounterforce
     
     /* cool kid counterforce */
@@ -318,6 +358,111 @@ MyCopyControls:
     move.b 0xFFF706,0x69(%a5)
     move.b 0xFFF708,0x6A(%a5)
     move.b (CTRL0_B6_PRESSED),(CTRL0_B6_RELEASED)
+    
+    /* transfer bit 7 of _DOWN to _RELEASED, to mark 6 button and not in cutscene */
+    move.b %d0, (CTRL0_B6_PRESSED)
+    move.b (CTRL0_B6_DOWN),%d0
+    andi.b #0x80, %d0
+    or.b %d0,(CTRL0_B6_RELEASED)
+    move.b (CTRL0_B6_PRESSED), %d0
     rts
+    
+.org 0x5CF50
+MyHangPissModeCheck:
+    btst #7,(CTRL0_B6_RELEASED)
+    beq .threebuttonhangpissmode
+    
+.sixbuttonhangpissmode:
+    /* mode */
+    btst #3,(CTRL0_B6_RELEASED)
+    bne .yeshangpissmode
+    /* X */
+    btst #2,(CTRL0_B6_RELEASED)
+    bne .yeshangpissmode
+    
+.nohangpissmode:
+    btst #6,0x006A(%a5)
+    beq .nohangpisswitch
+    jmp 0x16174
+    
+.nohangpisswitch:
+    jmp 0x16170
+    
+.yeshangpissmode:
+    jmp 0x1616C
+    
+.threebuttonhangpissmode:
+    btst #6,0x006A(%a5)
+    jmp 0x16162
+    
+.org 0x5CFE0
+CheckPissMode:
+    /* mode */
+    btst #3,(CTRL0_B6_RELEASED)
+    bne .yespissmodec
+    btst #2,(CTRL0_B6_RELEASED)
+    bne .yespissmodec
+    rts
+.yespissmodec:
+   jmp 0x15638
    
+.org 0x5D020
+CheckPitButtons:
+    move.b (CTRL0_B6_RELEASED),%d0
+    and #0x7,%d0
+    bne .pressedpitbutton
+    move.b 0x006a(%a5),%d0
+    andi.w #0x70,%d0
+    bne .pressedpitbutton
+
+.nopitbutton:
+    jmp 0x15182
+
+.pressedpitbutton:
+    jmp 0x15172
+
+.org 0x5D080
+ReversePissCheck:
+    btst #7,(CTRL0_B6_RELEASED)
+    beq .threebuttonreversepisscheck
+
+.sixbuttonreversepisscheck:
+    bsr CheckPissMode
+    btst #6,0x6A(%a5)
+    bne .reversepissmenu
+    jmp 0x16702
+    
+.reversepissmenu:
+    jmp 0x166FC
+
+.threebuttonreversepisscheck:
+    btst #6,0x6A(%a5)
+    jmp 0x166F0
+
+.org 0x5D0E0
+ReverseDashCheck:
+    btst #7,(CTRL0_B6_RELEASED)
+    beq .threebuttonreversedashcheck
+
+.sixbuttonreversedashcheck:
+    /* check z */
+    btst #0,(CTRL0_B6_RELEASED)
+    bne .reversedash
+
+    btst #5,0x006A(%a5)
+    bne .reversejump
+    
+.noreversejump:
+    jmp 0x15C1E
+    
+.reversejump:
+    jmp 0x15C32
+
+.reversedash:
+    jmp 0x1592E
+
+.threebuttonreversedashcheck:
+    btst #5,0x006A(%a5)
+    jmp 0x15C26
+
 PATCH_END_injected_code:
