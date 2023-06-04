@@ -80,6 +80,13 @@ PATCH_BEGIN air_hang_dash_check
     jmp 0x5CE50
 PATCH_END air_hang_dash_check
 
+.org 0x16B0A
+PATCH_BEGIN copy_controls
+    nop
+    jmp 0x5CF00
+PATCH_END copy_controls
+
+
 .org 0x16B24
 PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
@@ -186,6 +193,10 @@ B6Pressed:
     eor.b #0xFF,%d1
     and.b %d0,%d1
     move.b %d1,(CTRL0_B6_PRESSED)
+    
+    /* write 0 to released */
+    andi.b #0x00, %d1
+    move.b %d1,(CTRL0_B6_RELEASED)
 
 .skipToRts2:
     rts
@@ -197,7 +208,7 @@ MyPissModeCheck:
     
 .sixbuttonpissmode:
 /* check x */
-    btst #2,(CTRL0_B6_PRESSED)
+    btst #2,(CTRL0_B6_RELEASED)
     beq .nopissmode
     jmp 0x15632
     
@@ -221,7 +232,7 @@ MyJumpDashCheck:
 
 .sixbuttonjumpdash:
     /* check z */
-    btst #0,(CTRL0_B6_PRESSED)
+    btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttondodash
     btst #5,0x006A(%a5)
     bne .sixbuttonjump
@@ -244,7 +255,7 @@ MyAirJumpDashCheck:
     
 .sixbuttonairjumpdash:
     /* Z */
-    btst #0,(CTRL0_B6_PRESSED)
+    btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttonairdash
     btst #5,0x006A(%a5)
     bne .sixbuttonairjump
@@ -267,7 +278,7 @@ MyHangDashJumpCheck:
     
 .sixbuttonhangjumpdash:
     /* Z */
-    btst #0,(CTRL0_B6_PRESSED)
+    btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttonhangdash
     btst #5,0x006A(%a5)
     bne .sixbuttonhangjump
@@ -290,7 +301,7 @@ MyCounterforce:
     
     /* cool kid counterforce */
     /* Y */
-    btst #1,(CTRL0_B6_PRESSED)
+    btst #1,(CTRL0_B6_RELEASED)
     beq .nocounterforce
     jmp 0x00016B32
     
@@ -301,5 +312,12 @@ MyCounterforce:
 
 .nocounterforce:
     jmp 0x16B3A
+   
+.org 0x5CF00
+MyCopyControls:
+    move.b 0xFFF706,0x69(%a5)
+    move.b 0xFFF708,0x6A(%a5)
+    move.b (CTRL0_B6_PRESSED),(CTRL0_B6_RELEASED)
+    rts
    
 PATCH_END_injected_code:
