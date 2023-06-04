@@ -297,7 +297,7 @@ MyCounterforce:
 .threebuttoncounterforce:
     subq.w #1,0x826A
     bmi .nocounterforce
-    jmp 0x00016B32
+    jmp 0x16B2a
 
 .nocounterforce:
     jmp 0x16B3A
