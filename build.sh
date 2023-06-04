@@ -3,7 +3,8 @@ set -e
 chmod a+x ./build.sh
 chmod a-w ./base.md
 m68k-linux-gnu-as -o hack.o hack.s
-m68k-linux-gnu-objcopy --image-base=0x1305 -O binary hack.o hack.bin
+m68k-linux-gnu-ld hack.o -o hack.elf
+m68k-linux-gnu-objcopy -O binary hack.elf hack.bin
 
 cp ./base.md hack.md
 chmod a+w ./hack.md
