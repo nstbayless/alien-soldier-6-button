@@ -21,18 +21,18 @@ CTRL0_B6_RELEASED = 0xFFF70B
 CTRL1_DATA = 0x00A10003
 CTRL1_CTRL = 0x00A10009
 
-/* disable region lock */
-.org 0x34E
-    PATCH_BEGIN skip_region_lock
-    nop
-    PATCH_END skip_region_lock
-
 /* disable checksum check */
 .org 0x36C
     PATCH_BEGIN skip_checksum_death
     nop
     nop
     PATCH_END skip_checksum_death
+
+/* disable region lock */
+.org 0x44E
+    PATCH_BEGIN skip_region_lock
+    nop
+    PATCH_END skip_region_lock
 
 .org 0x33a8
     PATCH_BEGIN read_controller_init
@@ -306,7 +306,7 @@ MyCounterforce:
     jmp 0x00016B32
     
 .threebuttoncounterforce:
-    subq.w #1,0x826A
+    subq.w #1,0xff826A
     bmi .nocounterforce
     jmp 0x16B2a
 
