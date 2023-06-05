@@ -107,7 +107,7 @@ PATCH_END air_hang_dash_check
 
 .org 0x1615C
 PATCH_BEGIN air_hang_piss_mode_check
-    jmp 0x5CF70
+    jmp 0x5CF90
 PATCH_END air_hang_piss_mode_check
 
 .org 0x1654E
@@ -134,7 +134,7 @@ PATCH_END counterforce_check
 .ifdef MODE_TOGGLE
 .org 0x16C90
 PATCH_BEGIN piss_mode_yellow_xor_x
-    jsr 0x5D500
+    /*jsr 0x5D500*/
 PATCH_END piss_mode_yellow_xor_x
 .endif
 
@@ -406,9 +406,10 @@ MyCounterforce:
 MyCopyControls:
     move.b 0xFFF706,0x69(%a5)
     move.b 0xFFF708,0x6A(%a5)
-    
-    btst #6,(CTRL0_B6_PRESSED)
-    bne .skipcopyb6
+
+    clr.b (CTRL0_B6_RELEASED)    
+    btst #7,(CTRL0_B6_DOWN)
+    beq .skipcopyb6
     
     /* RELEASED is where we will check for PRESSED from now on, stupidly. */
     move.b (CTRL0_B6_PRESSED),(CTRL0_B6_RELEASED)
@@ -434,11 +435,20 @@ MyCopyControls:
     andi.b #0x80, %d0
     or.b %d0,(CTRL0_B6_RELEASED)
     
+    /* Y */
+    btst #1,(CTRL0_B6_RELEASED)
+    beq .nocounterforcestop
+.counterforcestop:
+    /* this is to fix a bug that happens if you parry while walking backward.
+       stop moving left/right if you press parry. */
+    andi.b #0xF3,0x69(%a5)
+
+.nocounterforcestop:
     move.b (CTRL0_B6_PRESSED), %d0
 .skipcopyb6:
     rts
     
-.org 0x5CF70
+.org 0x5CF90
 MyHangPissModeCheck:
     btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonhangpissmode
@@ -842,11 +852,11 @@ TextTransferList:
     
     .word 0xA100
     .word 0x6910
-    .long 0x5D378 /* TextZeroTeleport*/
+    .long 0x5D38C /* TextCounterForce */
     
     .word 0xA100
     .word 0x6A10
-    .long 0x5D38C /* TextCounterForce */
+    .long 0x5D378 /* TextZeroTeleport*/
     
     .word 0xA100
     .word 0x6B1A
@@ -886,6 +896,11 @@ ScreenDMAListEnd:
         
     .org 0x5D500
     CheckPissColour:
+        tst.w (PISS_MODE)
+        rts
+        
+        btst #7,(CTRL0_B6_RELEASED)
+        beq .orgCheckPissColour
         btst #5,(CTRL0_B6_RELEASED)
         beq .orgCheckPissColour
         tst.w (PISS_MODE)
