@@ -512,69 +512,106 @@ SixButtonJumpOrDrop:
 /* safe to clobber: a0, a1, d0 */
 .org 0x5D1E0
 AlternateControlView:
-    /* DMA */
+    btst #7,(CTRL0_B6_DOWN)
+    beq .skipAlternateControlView
     
     lea 0xC00004,%a1
     lea 0xC00000,%a0
-    
-    /* enable DMA transfer, critical section -- shoddy code! Improve!
-        What's the correct way to enter a critical section..? */
-    /*move.w #(0x8000 + (0 << 8) + 0x04),(%a1)*/
-    /*move.w #(0x8000 + (1 << 8) + 0x74),(%a1)*/
-    
-    /* I TIED SO HARD TO GET DMA TO WORK. IT DID NOT. */
 
-move.w #(0x8000 + (15 << 8) + 0x02),(%a1)   /*Auto-Increment*/    
-    move.l #(0x400000 + (0xE7B0 >> 14) + (0xE7B0 << 16)),(%a1)
+    /* disable interrupts */
+    move    #0x2700,%sr
     
-    move.l #00000000,(%a0)
-    move.l #00000000,(%a0)
-    move.l #00000000,(%a0)
+    move.w #(0x8000 + (15 << 8) + 0x02),(%a1)   /*Auto-Increment*/
+    move.l #(0x67b00003),(%a1) /* 0xe7b0 */
+    bsr .write4z
+    move.l #(0x68300003),(%a1) /* 0xe830 */
+    bsr .write4z
+    move.l #(0x69300003),(%a1) /* 0xe930 */
+    bsr .write4z
+    move.l #(0x69B00003),(%a1) /* 0xe9B0 */
+    bsr .write4z
+    move.l #(0x6A300003),(%a1) /* 0xeA30 */
+    bsr .write4z
+    move.l #(0x6AB00003),(%a1) /* 0xeAB0 */
+    bsr .write4z
     
-    move.l #(0x400000 + (0xE8B0 >> 14) + (0xE8B0 << 16)),(%a1)
-    move.l #00000000,(%a0)
-    move.l #00000000,(%a0)
-    move.l #00000000,(%a0)
-    
-    /* length */
-    /*
-    move.w #(0x8000 + (19 << 8) + 0x04),(%a1)
-    move.w #(0x8000 + (20 << 8) + 0x00),(%a1)
-    */
-    /* DMA Copy Source */
-    /*
-    move.w #(0x8000 + (23 << 8) + ((0x5D300 >> 17) & 0xFF)),(%a1)
-    move.w #(0x8000 + (22 << 8) + ((0x5D300 >> 9) & 0xFF)),(%a1)
-    move.w #(0x8000 + (21 << 8) + ((0x5D300 >> 1) & 0xFF)),(%a1)
-    */
+    /* okay, now let's add new sprites in... */
+    move.l #(0x40200000),(%a1) /* 0x0020 */
+    move.l #4*4*3-1,%d0
 
-    /* destination address */
-    /*move.l #(0xA7BC0083),(%a0)*/
-
-    /*move.l #(0x04000000 + (0xe7bc >> 14) + ((0xe7bc & 0x3FFF) << 16)),(%a1)*/
-    /*move.l #(0x04000080 + (0xe7bc >> 14) + ((0xe7bc & 0x3FFF) << 16)),(%a1)*/
-    /*move.l #(0x04000080),(%a1)*/
-
-    /* disable DMA transfer (return to previous value; was 0x64 before, it seems) */
-    /*move.w #(0x8000 + (1 << 8) + 0x64),(%a1)*/
-    /*move.w #(0x8000 + (0 << 8) + 0x14),(%a1)*/
+    lea 0x5D300, %a1
+.loop:
+    move.l (%a1)+,(%a0)
+    /*add.w #4,%a1*/
+    dbra %d0, .loop
     
+    lea 0xC00004,%a1
+    move.l #(0x67b00003),(%a1) /* 0xe7b0 */
+    move.l #0xA001A003,(%a0)
+    move.l #(0x68300003),(%a1) /* 0xe830 */
+    move.l #0xA002A004,(%a0)
+    
+    /* enable interrupts */
+    move    #0x2300,%sr
+   
 .skipAlternateControlView:
     /* original code */
     jsr 0x1f784
     btst #7,0xfff708
     rts
-
+    
+ .write4z:
+    move.l #00, (%a0)
+    move.l #00, (%a0)
+    move.l #00, (%a0)
+    move.l #00, (%a0)
+    rts
+    
 .org 0x5D300
-DMACopySource:
-    .byte 0x07
-    .byte 0x06
-    .byte 0x05
-    .byte 0x04
-    .byte 0x03
-    .byte 0x02
-    .byte 0x01
-    .byte 0x10
-    .byte 0x20
+Sprites:
+
+/* (X) - top left */
+    .long 0x00000000
+    .long 0x000000EE
+    .long 0x0000EE11
+    .long 0x000E1222
+    
+    .long 0x00E11211
+    .long 0x00E11211
+    .long 0x0E111211
+    .long 0x0E111222
+    
+/* (X) - top right */
+    .long 0x0E111211
+    .long 0x0E111211
+    .long 0x0DE11211
+    .long 0x00E11222
+    
+    .long 0x00DE1111
+    .long 0x000DEE11
+    .long 0x0000DDEE
+    .long 0x000000DD
+
+/* (X) - bottom left */    
+    .long 0x00000000
+    .long 0xEE000000
+    .long 0x11EE0000
+    .long 0x2211E000
+
+    .long 0x11211E00
+    .long 0x11211E00
+    .long 0x112111E0
+    .long 0x221111E0
+
+/* (X) - bottom right */    
+    .long 0x112111E0
+    .long 0x112111E0
+    .long 0x11211ED0
+    .long 0x22111E00
+    
+    .long 0x1111ED00
+    .long 0x11EED000
+    .long 0xEEDD0000
+    .long 0xDD000000
 
 PATCH_END_injected_code:
