@@ -20,7 +20,13 @@ CTRL0_B6_PRESSED = 0xFFF709
 CTRL0_RELEASED = 0xFFF70A
 CTRL0_B6_RELEASED = 0xFFF70B
 
-LILB = 0xFF2020
+/* queue is in sets of 0x10-length entries sent to 0xC00004
+   from routine at 0x000DB2. To add to the queue, prepend/decrement!
+   (grows downward from 0xFFF3F0?). */
+DMA_QUEUE = 0xFFF70C
+
+/* arbitrary data for DMA. Grows upward from 0xFFF400. */
+DMA_DATA = 0xFFF70E
 
 CTRL1_DATA = 0x00A10003
 CTRL1_CTRL = 0x00A10009
@@ -105,7 +111,7 @@ PATCH_END air_hang_piss_mode_check
 
 .org 0x1654E
 PATCH_BEGIN reverse_crouch_dash_jump_check
-    jmp 0x5D360
+    jmp 0x5D1A0
 PATCH_END reverse_crouch_dash_jump_check
 
 .org 0x166EA
@@ -124,17 +130,10 @@ PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
 PATCH_END counterforce_check
 
-.org 0x1F404
-PATCH_BEGIN alternate_control_lilb
-    jsr 0x5D320
-PATCH_END alternate_control_lilb
-
-.org 0x1f464
-PATCH_BEGIN alternate_control_view
-    nop
-    nop
-    jsr 0x5D1E0
-PATCH_END alternate_control_view
+.org 0x1f3e6
+PATCH_BEGIN test_screen_patch
+    jmp 0x5D3B0
+PATCH_END test_screen_patch
 
 .org 0x23D7A
 PATCH_BEGIN demo_input
@@ -519,130 +518,7 @@ SixButtonJumpOrDrop:
 .regularjump:
     jmp 0x15BF2
     
-/* safe to clobber: a0, a1, d0 */
-.org 0x5D1E0
-AlternateControlView:
-    btst #7,(CTRL0_B6_DOWN)
-    beq .skipAlternateControlView
-    btst #7,(LILB)
-    beq .skipAlternateControlView
-    clr.b (LILB)
-    
-    lea 0xC00004,%a1
-    lea 0xC00000,%a0
-
-    /* disable interrupts */
-    move    #0x2700,%sr
-    
-    move.w #(0x8000 + (15 << 8) + 0x02),(%a1)   /*Auto-Increment*/
-    
-    /* cram 0 */
-    /*move.l #(0xC07C0000),(%a1)
-    move.l #00, (%a0)*/
-    
-    /* blank screen */
-    /*move.w #(0x8000 + (1 << 8) + 0x2C),(%a1)*/
-
-    move.l #(0x67b00003),(%a1) /* 0xe7b0 */    
-
-    move.l #(0x67b00003),(%a1) /* 0xe7b0 */
-    bsr .write4z
-    move.l #(0x68300003),(%a1) /* 0xe830 */
-    bsr .write4z
-    move.l #(0x69300003),(%a1) /* 0xe930 */
-    bsr .write4z
-    move.l #(0x69B00003),(%a1) /* 0xe9B0 */
-    bsr .write4z
-    move.l #(0x6A300003),(%a1) /* 0xeA30 */
-    bsr .write4z
-    move.l #(0x6AB00003),(%a1) /* 0xeAB0 */
-    bsr .write4z
-    
-    move    #0x2700,%sr
-    
-    /* wait for vblank */
-.waitloop:
-    move.w (%a1),%d0
-    btst #3,%d0
-    beq .waitloop
-    
-    move    #0x2300,%sr
-    
-    /* okay, now let's add new sprites in... */
-    move.l #(0x40200000),(%a1) /* 0x0020 */
-    move.l #4*4*6-1,%d0
-
-    lea 0x5D3E0, %a1
-.loop:
-    move.l (%a1)+,(%a0)
-    /*add.w #4,%a1*/
-    dbra %d0, .loop
-    
-    /* update tilemap to show x/y/z buttons */
-    lea 0xC00004,%a1
-    
-    /* x */
-    move.l #(0x67b00003),(%a1) /* 0xe7b0 */
-    move.l #0xA001A003,(%a0)
-    move.l #(0x68300003),(%a1) /* 0xe830 */
-    move.l #0xA002A004,(%a0)
-    
-    /* z */
-    move.l #(0x69300003),(%a1) /* 0xe7b0 */
-    move.l #0xA009A00B,(%a0)
-    move.l #(0x69b00003),(%a1) /* 0xe830 */
-    move.l #0xA00AA00C,(%a0)
-
-    /* y */
-    move.l #(0x6A300003),(%a1) /* 0xe7b0 */
-    move.l #0xA005A007,(%a0)
-    move.l #(0x6AB00003),(%a1) /* 0xe830 */
-    move.l #0xA006A008,(%a0)
-    
-    /* unblank screen */
-    /*move.w #(0x8000 + (1 << 8) + 0x6C),(%a1)*/
-    
-    /* enable interrupts */
-    move    #0x2300,%sr
-   
-.skipAlternateControlView:
-    /* original code */
-    jsr 0x1f784
-    btst #7,0xfff708
-    rts
-    
- .write4z:
-    move.l #00, (%a0)
-    move.l #00, (%a0)
-    move.l #00, (%a0)
-    move.l #00, (%a0)
-    rts
-
-.org 0x5D320
-SetLilB:
-    btst #7,(CTRL0_B6_DOWN)
-    beq .lilborgcode
-    ori.b #0x80, (LILB)
-    
-    /* okay to clobber %a1 */
-    /*
-    move.l 0xC00004,%a1
-    
-    move    #0x2700,%sr
-    move.w #(0x8000 + (15 << 8) + 0x02),(%a1)
-    
-    move.l #(0xC07C0000),(%a1)
-    move.l 0xC00000,%a1
-    move.l #00, (%a1)
-    
-    move    #0x2300,%sr
-    */
-    
-.lilborgcode:
-    /* original code */
-    jmp 0x4614
-
-.org 0x5D360
+.org 0x5D1A0
 ReverseCrouchAirDash:
     btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonreversecrouchdashcheck
@@ -668,7 +544,7 @@ ReverseCrouchAirDash:
     btst #5,0x006A(%a5)
     jmp 0x16554
     
-.org 0x5D3E0
+.org 0x5D1E0
 Sprites:
 
 /* (X) - top left */
@@ -802,5 +678,130 @@ Sprites:
     .long 0x11EED000
     .long 0xEEDD0000
     .long 0xDD000000
+    
+.org 0x5D360
+TextShootModeChange:
+    /* copied from 0x1FB8B ... 0x1FBA7 */
+    .long 0x1D121919 /*; SHOO*/
+    .long 0x1E001719 /*; T MO*/
+    .long 0x0E0F000D /*; DE C*/
+    .long 0x120B1811 /*; HANG*/
+    .long 0x0F002E00 /*; E - */
+    .long 0x0102FF00
+    
+/* could add "shoot mode toggle" btw */
+.org 0x5D378
+TextZeroTeleport:
+    /* copied from 0x1FBA7 ... 0x1FBBF */
+    .long 0x240F1C19 /*; ZERO*/
+    .long 0x001E0F16 /*;  TEL*/
+    .long 0x0F1A191C /*; EPOR*/
+    .long 0x1E002E00 /*; T - */
+    .long 0x0304FF00
 
+.org 0x5D38C
+TextCounterForce:
+    /* copied from 0x1FBBf ... 0x1FBD7 */
+    .long 0x0D191F18 /*; COUN*/
+    .long 0x1E0F1C00 /*; TER */
+    .long 0x10191C0D /*; FORC */
+    .long 0x0F002E00 /*; E - */
+    .long 0x0506FF00
+
+
+.org 0x5D3B0
+CustomTestScreenTransfer:
+    addq.w #2,0xffa29c
+    clr.w 0xff8040
+    btst #7,(CTRL0_B6_DOWN)
+    beq .orgScreenTransfer
+    
+.transferloop:
+    lea TextTransferList(%pc),%a1
+    nop
+    move.w 0xff8040,%d1
+    move.w 0x00(%a1,%d1.w),%d0
+    move.w 0x02(%a1,%d1.w),%d4
+    move.l 0x04(%a1,%d1.w),%a0
+    jsr 0x4614
+    addi.w #0x8,0xff8040
+    cmpi.w #0x40,0xff8040
+    bne .transferloop
+    
+    /* our own DMA -- this should be no. 0x10-length entries minus 1 */
+    moveq #0, %d0
+    lea ScreenDMAListEnd(%pc),%a0
+    movea.w (DMA_QUEUE),%a1
+.adddmaloop:
+    move.l -(%a0),-(%a1)
+    move.l -(%a0),-(%a1)
+    move.l -(%a0),-(%a1)
+    move.l -(%a0),-(%a1)
+    dbra %d0,.adddmaloop
+    move.w %a1,(DMA_QUEUE)
+    
+    jmp 0x1f418
+
+.orgScreenTransfer:
+    jmp 0x1F3EE
+    
+TextTransferList:
+    .word 0x8100
+    .word 0x629C
+    .long 0x1FB57
+    
+    .word 0xA100
+    .word 0x6410
+    .long 0x1FB64
+    
+    .word 0xA100
+    .word 0x6522
+    .long 0x1FB77
+    
+    .word 0xA100
+    .word 0x6622
+    .long 0x1FB81
+    
+    .word 0xA100
+    .word 0x6788
+    .long 0x5D360 /* TextShootModeChange*/
+    
+    .word 0xA100
+    .word 0x6910
+    .long 0x5D378 /* TextZeroTeleport*/
+    
+    .word 0xA100
+    .word 0x6A10
+    .long 0x5D38C /* TextCounterForce */
+    
+    .word 0xA100
+    .word 0x6B1A
+    .long 0x1FBD7
+    
+ScreenDMAList:
+TileDataDMA:
+    /* length of data (Sprites) */
+    .long 0x940093C0
+    
+    /* address of Sprites divided by 2. */
+    .long 0x8F029702 /* auto-increment: 2; addr hi: 0x02*/
+    .long 0x96e895f0 /* addr med: 0xe8; lo: f0*/
+    .long 0x60400080 /* vram dst addr and execute DMA */
+    
+PatchDataShootModeDMA:
+    /*.long 0x94009302 /* length (4) */
+    
+    /* address of PatchDataShootMode/2 */
+    /*.long 0x8F029702 /* auto-inc: 2; hi: 0x02 */
+    /*.long 0x96ea9540 /* med: 0xea; lo: 0x40*/
+    /*.long 0x67b00083 /* vram dst addr (e7b0) and execute DMA */
+
+ScreenDMAListEnd:
+    .long 0x94009304
+    
+.org 0x5D480
+PatchDataShootMode:
+    .word 0x8001
+    .word 0x9003
+    
 PATCH_END_injected_code:
