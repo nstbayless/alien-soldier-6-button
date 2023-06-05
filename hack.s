@@ -11,8 +11,6 @@
     .byte 0x71
 .endm
 
-
-
 /* just so you know, the B6_ names are meaningless now. Ignore the names. */
 
 CTRL0_DOWN = 0xFFF706
@@ -105,6 +103,11 @@ PATCH_BEGIN air_hang_piss_mode_check
     jmp 0x5CF60
 PATCH_END air_hang_piss_mode_check
 
+.org 0x1654E
+PATCH_BEGIN reverse_crouch_dash_jump_check
+    jmp 0x5D360
+PATCH_END reverse_crouch_dash_jump_check
+
 .org 0x166EA
 PATCH_BEGIN reverse_piss_check  
     jmp 0x5D080
@@ -123,7 +126,7 @@ PATCH_END counterforce_check
 
 .org 0x1F404
 PATCH_BEGIN alternate_control_lilb
-    jsr 0x5D300
+    jsr 0x5D320
 PATCH_END alternate_control_lilb
 
 .org 0x1f464
@@ -532,6 +535,16 @@ AlternateControlView:
     move    #0x2700,%sr
     
     move.w #(0x8000 + (15 << 8) + 0x02),(%a1)   /*Auto-Increment*/
+    
+    /* cram 0 */
+    /*move.l #(0xC07C0000),(%a1)
+    move.l #00, (%a0)*/
+    
+    /* blank screen */
+    /*move.w #(0x8000 + (1 << 8) + 0x2C),(%a1)*/
+
+    move.l #(0x67b00003),(%a1) /* 0xe7b0 */    
+
     move.l #(0x67b00003),(%a1) /* 0xe7b0 */
     bsr .write4z
     move.l #(0x68300003),(%a1) /* 0xe830 */
@@ -545,11 +558,21 @@ AlternateControlView:
     move.l #(0x6AB00003),(%a1) /* 0xeAB0 */
     bsr .write4z
     
+    move    #0x2700,%sr
+    
+    /* wait for vblank */
+.waitloop:
+    move.w (%a1),%d0
+    btst #3,%d0
+    beq .waitloop
+    
+    move    #0x2300,%sr
+    
     /* okay, now let's add new sprites in... */
     move.l #(0x40200000),(%a1) /* 0x0020 */
     move.l #4*4*6-1,%d0
 
-    lea 0x5D330, %a1
+    lea 0x5D3E0, %a1
 .loop:
     move.l (%a1)+,(%a0)
     /*add.w #4,%a1*/
@@ -576,6 +599,9 @@ AlternateControlView:
     move.l #(0x6AB00003),(%a1) /* 0xe830 */
     move.l #0xA006A008,(%a0)
     
+    /* unblank screen */
+    /*move.w #(0x8000 + (1 << 8) + 0x6C),(%a1)*/
+    
     /* enable interrupts */
     move    #0x2300,%sr
    
@@ -592,14 +618,57 @@ AlternateControlView:
     move.l #00, (%a0)
     rts
 
-.org 0x5D300
+.org 0x5D320
 SetLilB:
+    btst #7,(CTRL0_B6_DOWN)
+    beq .lilborgcode
     ori.b #0x80, (LILB)
     
+    /* okay to clobber %a1 */
+    /*
+    move.l 0xC00004,%a1
+    
+    move    #0x2700,%sr
+    move.w #(0x8000 + (15 << 8) + 0x02),(%a1)
+    
+    move.l #(0xC07C0000),(%a1)
+    move.l 0xC00000,%a1
+    move.l #00, (%a1)
+    
+    move    #0x2300,%sr
+    */
+    
+.lilborgcode:
     /* original code */
     jmp 0x4614
+
+.org 0x5D360
+ReverseCrouchAirDash:
+    btst #7,(CTRL0_B6_RELEASED)
+    beq .threebuttonreversecrouchdashcheck
+
+.sixbuttonreversecrouchdashcheck:
+    /* check z */
+    btst #0,(CTRL0_B6_RELEASED)
+    bne .reversecrouchdash
+
+    btst #5,0x006A(%a5)
+    bne .reversecrouchjump
     
-.org 0x5D330
+.noreversecrouchjump:
+    jmp 0x16564
+    
+.reversecrouchjump:
+    jmp 0x15C72
+
+.reversecrouchdash:
+    jmp 0x16560
+
+.threebuttonreversecrouchdashcheck:
+    btst #5,0x006A(%a5)
+    jmp 0x16554
+    
+.org 0x5D3E0
 Sprites:
 
 /* (X) - top left */
