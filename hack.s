@@ -21,10 +21,6 @@ CTRL0_RELEASED = 0xFFF70A
 CTRL0_B6_RELEASED = 0xFFF70B
 PISS_MODE = 0xFFA22A /* word; in bit 1 */
 
-.ifdef MODE_TOGGLE
-CHECK_PISS = 0x5D500
-.endif
-
 /* queue is in sets of 0x10-length entries sent to 0xC00004
    from routine at 0x000DB2. To add to the queue, prepend/decrement!
    (grows downward from 0xFFF3F0?). */
@@ -79,67 +75,15 @@ PATCH_END jump_to_subroutine
     moveq #-1,%d0
     PATCH_END fix_password_dir_down
 
-.ifdef MODE_TOGGLE
-.org 0xF968
-    PATCH_BEGIN detour_to_nearby_piss_check_1
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_1
-.endif
-
 .org 0x15168
 PATCH_BEGIN pit_mode_buttons
     jmp 0x5D020
 PATCH_END pit_mode_buttons
 
-.ifdef MODE_TOGGLE
-    /* check piss colour immediate mode */
-    .org 0x15254
-    PATCH_BEGIN detour_to_nearby_piss_check_13
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_13
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x15450
-    PATCH_BEGIN detour_to_nearby_piss_check_11
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_11
-.endif
-
 .org 0x155B0
 PATCH_BEGIN piss_mode_check
     jmp 0x05CCF0 /*MyPissModeCheck*/
 PATCH_END piss_mode_check
-
-.ifdef MODE_TOGGLE
-.org 0x15654
-    PATCH_BEGIN detour_to_nearby_piss_check_12
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_12
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x15664
-    PATCH_BEGIN detour_to_nearby_piss_check_14
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_14
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x156F4
-    PATCH_BEGIN detour_to_nearby_piss_check_5
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_5
-.endif
-
-.ifdef MODE_TOGGLE
-    .org 0x157BE
-    PATCH_BEGIN nearby_piss_check
-        jmp 0x5D540 /* NearbyPissCheckTrampoline */
-    NearbyPissCheck:
-        jmp CHECK_PISS
-    PATCH_END nearby_piss_check
-.endif
 
 .org 0x15BB8
 PATCH_BEGIN jump_dash_check
@@ -163,53 +107,18 @@ PATCH_END air_hang_dash_check
 
 .org 0x1615C
 PATCH_BEGIN air_hang_piss_mode_check
-    jmp 0x5CF60
+    jmp 0x5CF70
 PATCH_END air_hang_piss_mode_check
-
-.ifdef MODE_TOGGLE
-.org 0x1643A
-    PATCH_BEGIN detour_to_nearby_piss_check_26
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_26
-.endif
 
 .org 0x1654E
 PATCH_BEGIN reverse_crouch_dash_jump_check
     jmp 0x5D1A0
 PATCH_END reverse_crouch_dash_jump_check
 
-.ifdef MODE_TOGGLE
-.org 0x16586
-    PATCH_BEGIN detour_to_nearby_piss_check_15
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_15
-.endif
-
 .org 0x166EA
 PATCH_BEGIN reverse_piss_check  
     jmp 0x5D080
 PATCH_END reverse_piss_check
-
-.ifdef MODE_TOGGLE
-.org 0x1678A
-    PATCH_BEGIN detour_to_nearby_piss_check_16
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_16
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1679A
-    PATCH_BEGIN detour_to_nearby_piss_check_18
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_18
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1682C
-    PATCH_BEGIN detour_to_nearby_piss_check_19
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_19
-.endif
 
 .org 0x16B0A
 PATCH_BEGIN copy_controls
@@ -224,144 +133,9 @@ PATCH_END counterforce_check
 
 .ifdef MODE_TOGGLE
 .org 0x16C90
-PATCH_BEGIN detour_to_check_piss
-    jsr CHECK_PISS
-PATCH_END detour_to_check_piss
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x16D88
-PATCH_BEGIN detour_to_load_piss
-    nop
-    jsr 0x5D558
-PATCH_END detour_to_load_piss
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x16DF6
-    PATCH_BEGIN detour_to_nearby_piss_check_4
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_4
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x17052
-    PATCH_BEGIN detour_to_nearby_piss_check_20
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_20
-.endif
-
-.ifdef MODE_TOGGLE
-    /* check piss colour immediate mode */
-    .org 0x17086
-    PATCH_BEGIN detour_to_nearby_piss_check_2
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_2
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x170C2
-    PATCH_BEGIN detour_to_nearby_piss_check_21
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_21
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x170FE
-    PATCH_BEGIN detour_to_nearby_piss_check_22
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_22
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x17E60
-    PATCH_BEGIN detour_to_nearby_piss_check_23
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_23
-.endif
-
-.ifdef MODE_TOGGLE
-    .org 0x17F7C
-    PATCH_BEGIN detour_to_nearby_piss_check_3
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_3
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x182Ce
-    PATCH_BEGIN detour_to_nearby_piss_check_24
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_24
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x18360
-    PATCH_BEGIN detour_to_nearby_piss_check_27
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_27
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x18444
-    PATCH_BEGIN detour_to_nearby_piss_check_28
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_28
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1856C
-    PATCH_BEGIN detour_to_nearby_piss_check_29
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_29
-.endif
-
-.ifdef MODE_TOGGLE
-    .org 0x18718
-    PATCH_BEGIN detour_to_nearby_piss_check_7
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_7
-.endif
-
-.ifdef MODE_TOGGLE
-    .org 0x19e84
-    PATCH_BEGIN detour_to_nearby_piss_check_8
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_8
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x19EFC
-    PATCH_BEGIN detour_to_nearby_piss_check_31
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_31
-.endif
-
-.ifdef MODE_TOGGLE
-    .org 0x19f54
-    PATCH_BEGIN detour_to_nearby_piss_check_9
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_9
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1CCF8
-    PATCH_BEGIN detour_to_nearby_piss_check_32
-    bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_32
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1EEAC
-    PATCH_BEGIN detour_to_nearby_piss_check_33
-    /*bsr NearbyPissCheck*/
-    PATCH_END detour_to_nearby_piss_check_33
-.endif
-
-.ifdef MODE_TOGGLE
-.org 0x1F1C2
-    PATCH_BEGIN detour_to_nearby_piss_check_34
-    /*bsr NearbyPissCheck*/
-    PATCH_END detour_to_nearby_piss_check_34
+PATCH_BEGIN piss_mode_yellow_xor_x
+    jsr 0x5D500
+PATCH_END piss_mode_yellow_xor_x
 .endif
 
 .org 0x1f3e6
@@ -469,29 +243,34 @@ B6Pressed:
     btst #7,%d0
     beq .skipToRts2
     
+    .ifdef MODE_TOGGLE
+        /* check if x pressed OR released */
+        move.b (CTRL0_B6_DOWN),%d1
+        eor.b %d0,%d1
+        andi.b #0x4,%d1
+        lsl.b #2,%d1
+        move.b %d1,(CTRL0_B6_PRESSED)
+    .endif
+    
     move.b (CTRL0_B6_DOWN),%d1
     move.b %d0,(CTRL0_B6_DOWN)
     eor.b #0xFF,%d1
     and.b %d0,%d1
     and #0x0F,%d1
     
-    .ifdef MODE_TOGGLE
-        /* store if X is down in _PRESSED */
-        move.b (CTRL0_B6_RELEASED),%d0
-        lsl.b #2,%d0
-        andi.b #0x10,%d0
-        or.b %d0,%d1
-    .endif
-    
     /* _PRESSED now contains xyzm buttons pressed this frame. */
-    move.b %d1,(CTRL0_B6_PRESSED)
+    .ifdef MODE_TOGGLE
+        or.b %d1,(CTRL0_B6_PRESSED)
+    .else
+        move.b %d1,(CTRL0_B6_PRESSED)
+    .endif
     
     /* clear released */
     clr.b (CTRL0_B6_RELEASED)
 
 .skipToRts2:
     /* shortly after this, control goes to MyCopyControls */
-    /* (but during demo, will first go to DemoInput ) */
+    /* (but during demo, will go to DemoInput instead! ) */
     rts
 
 .org 0x05CCF0
@@ -636,14 +415,30 @@ MyCopyControls:
     
     /* transfer bit 7 of _DOWN to _RELEASED, to mark 6-button and not in cutscene */
     move.b %d0, (CTRL0_B6_PRESSED)
+    
+    .ifdef MODE_TOGGLE
+        /* if holding X down, mark that in CTRL0_B6_RELEASED*/
+        move.b (CTRL0_B6_DOWN),%d0
+        andi.b #0x04,%d0
+        lsl.b #3,%d0
+        or.b %d0,(CTRL0_B6_RELEASED)
+        
+        /* toggle piss mode */
+        btst #4,(CTRL0_B6_RELEASED)
+        beq .skiptogglepiss
+        eori.b #0x2,(PISS_MODE+1)
+    .skiptogglepiss:
+    .endif
+    
     move.b (CTRL0_B6_DOWN),%d0
     andi.b #0x80, %d0
     or.b %d0,(CTRL0_B6_RELEASED)
+    
     move.b (CTRL0_B6_PRESSED), %d0
 .skipcopyb6:
     rts
     
-.org 0x5CF60
+.org 0x5CF70
 MyHangPissModeCheck:
     btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonhangpissmode
@@ -1088,43 +883,24 @@ ScreenDMAListEnd:
         .long 0x0F002E00 /*; E - */
         .long 0x17190E0F /*; MODE*/
         .byte 0xFF
-    .endif
-    
-    .org 0x5D500 /* CHECK_PISS */
-    mode_toggle_check_pissmode:
-        btst #7,(CTRL0_B6_RELEASED)
-        beq .org_check_pissmode
-        btst #4,(CTRL0_B6_RELEASED) /* hold x */
-        beq .org_check_pissmode
-        /* reverse of piss mode */
-        tst.w PISS_MODE
-        bne .reteq
-.retne:
-        btst #7,(CTRL0_B6_RELEASED) /* guaranteed 1 */
-        rts
-
-.reteq:
-        btst #5,(CTRL0_B6_RELEASED) /* guaranteed 0 */
-        rts
-    
-    .org_check_pissmode:
-        tst.b PISS_MODE+1
-        rts
-
-    .org 0x5D540
-    NearbyPissCheckTrampoline:
-        move.w #0x56,0x4(%a5)
-        move.w #0x08,0x4E(%a5)
-        jmp 0x157D0
         
-    .org 0x5D558
-        move.b 0x69(%a5),%d1
-        bsr mode_toggle_check_pissmode
-        beq .load_0
-        move.w #0x02,%d0
+    .org 0x5D500
+    CheckPissColour:
+        btst #5,(CTRL0_B6_RELEASED)
+        beq .orgCheckPissColour
+        tst.w (PISS_MODE)
+        bne .getbe
+    
+    .getbne:
+        btst #7,(CTRL0_B6_RELEASED) /* guaranteed ne*/
         rts
         
-    .load_0:
-        move.w #0x00,%d0
+    .getbe:
+        btst #6,(CTRL0_B6_RELEASED) /* guaranteed eq*/
         rts
+        
+    .orgCheckPissColour:
+        tst.w (PISS_MODE)
+        rts
+.endif
 PATCH_END_injected_code:
