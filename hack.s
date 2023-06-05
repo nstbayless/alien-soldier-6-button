@@ -19,6 +19,11 @@ CTRL0_PRESSED = 0xFFF708
 CTRL0_B6_PRESSED = 0xFFF709
 CTRL0_RELEASED = 0xFFF70A
 CTRL0_B6_RELEASED = 0xFFF70B
+PISS_MODE = 0xFFA22A /* word; in bit 1 */
+
+.ifdef MODE_TOGGLE
+CHECK_PISS = 0x5D500
+.endif
 
 /* queue is in sets of 0x10-length entries sent to 0xC00004
    from routine at 0x000DB2. To add to the queue, prepend/decrement!
@@ -79,10 +84,34 @@ PATCH_BEGIN pit_mode_buttons
     jmp 0x5D020
 PATCH_END pit_mode_buttons
 
+.ifdef MODE_TOGGLE
+    /* check piss colour immediate mode */
+    .org 0x15254
+    PATCH_BEGIN detour_to_nearby_piss_check_1
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_1
+.endif
+
 .org 0x155B0
 PATCH_BEGIN piss_mode_check
     jmp 0x05CCF0 /*MyPissModeCheck*/
 PATCH_END piss_mode_check
+
+.ifdef MODE_TOGGLE
+.org 0x156F4
+    PATCH_BEGIN detour_to_nearby_piss_check_5
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_5
+.endif
+
+.ifdef MODE_TOGGLE
+    .org 0x157BE
+    PATCH_BEGIN nearby_piss_check
+        jmp 0x5D540 /* NearbyPissCheckTrampoline */
+    NearbyPissCheck:
+        jmp CHECK_PISS
+    PATCH_END nearby_piss_check
+.endif
 
 .org 0x15BB8
 PATCH_BEGIN jump_dash_check
@@ -129,6 +158,50 @@ PATCH_END copy_controls
 PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
 PATCH_END counterforce_check
+
+.ifdef MODE_TOGGLE
+.org 0x16C90
+PATCH_BEGIN detour_to_check_piss
+    jsr CHECK_PISS
+PATCH_END detour_to_check_piss
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x16D88
+PATCH_BEGIN detour_to_load_piss
+    nop
+    jsr 0x5D558
+PATCH_END detour_to_load_piss
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x16DF6
+    PATCH_BEGIN detour_to_nearby_piss_check_4
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_4
+.endif
+
+.ifdef MODE_TOGGLE
+    /* check piss colour immediate mode */
+    .org 0x17086
+    PATCH_BEGIN detour_to_nearby_piss_check_2
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_2
+.endif
+
+.ifdef MODE_TOGGLE
+    .org 0x17F7C
+    PATCH_BEGIN detour_to_nearby_piss_check_3
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_3
+.endif
+
+.ifdef MODE_TOGGLE
+    .org 0x18718
+    PATCH_BEGIN detour_to_nearby_piss_check_7
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_7
+.endif
 
 .org 0x1f3e6
 PATCH_BEGIN test_screen_patch
@@ -230,6 +303,7 @@ Subroutine:
 
 .org 0x05CCA0
 B6Pressed:
+    /* d0 <- directly read input */
     move.b (CTRL0_B6_RELEASED),%d0
     btst #7,%d0
     beq .skipToRts2
@@ -239,6 +313,14 @@ B6Pressed:
     eor.b #0xFF,%d1
     and.b %d0,%d1
     and #0x0F,%d1
+    
+    .ifdef MODE_TOGGLE
+        /* store if X is down in _PRESSED */
+        move.b (CTRL0_B6_RELEASED),%d0
+        lsl.b #2,%d0
+        andi.b #0x10,%d0
+        or.b %d0,%d1
+    .endif
     
     /* _PRESSED now contains xyzm buttons pressed this frame. */
     move.b %d1,(CTRL0_B6_PRESSED)
@@ -259,10 +341,15 @@ MyPissModeCheck:
 .sixbuttonpissmode:
 /* check mode */
     btst #3,(CTRL0_B6_RELEASED)
+.ifndef MODE_TOGGLE
     bne .yespissmode
+    
 /* check x */
     btst #2,(CTRL0_B6_RELEASED)
     beq .nopissmode
+.else
+    beq .nopissmode
+.endif
     
 .yespissmode:
     jmp 0x15632
@@ -404,9 +491,12 @@ MyHangPissModeCheck:
     /* mode */
     btst #3,(CTRL0_B6_RELEASED)
     bne .yeshangpissmode
+    
+.ifndef MODE_TOGGLE
     /* X */
     btst #2,(CTRL0_B6_RELEASED)
     bne .yeshangpissmode
+.endif
     
 .nohangpissmode:
     btst #6,0x006A(%a5)
@@ -428,8 +518,10 @@ CheckPissMode:
     /* mode */
     btst #3,(CTRL0_B6_RELEASED)
     bne .yespissmodec
+.ifndef MODE_TOGGLE
     btst #2,(CTRL0_B6_RELEASED)
     bne .yespissmodec
+.endif
     rts
 .yespissmodec:
    jmp 0x15638
@@ -680,14 +772,27 @@ Sprites:
     .long 0xDD000000
     
 .org 0x5D360
-TextShootModeChange:
-    /* copied from 0x1FB8B ... 0x1FBA7 */
-    .long 0x1D121919 /*; SHOO*/
-    .long 0x1E001719 /*; T MO*/
-    .long 0x0E0F000D /*; DE C*/
-    .long 0x120B1811 /*; HANG*/
-    .long 0x0F002E00 /*; E - */
-    .long 0x0102FF00
+
+.ifdef MODE_TOGGLE
+    TextTemporaryAiming:
+        /* copied from 0x1FB8B ... 0x1FBA7 */
+        .long 0x1E0F171A /*; TEMP*/
+        .long 0x191C0B1C /*; ORAR*/
+        .long 0x23000B13 /*; Y AI*/
+        .long 0x17131811 /*; MING*/
+        .long 0x002E0001 /*;  - (*/
+        .long 0x02FF0000 /*; )\  */
+.else
+
+    TextShootModeChange:
+        /* copied from 0x1FB8B ... 0x1FBA7 */
+        .long 0x1D121919 /*; SHOO*/
+        .long 0x1E001719 /*; T MO*/
+        .long 0x0E0F000D /*; DE C*/
+        .long 0x120B1811 /*; HANG*/
+        .long 0x0F002E00 /*; E - */
+        .long 0x0102FF00
+.endif
     
 /* could add "shoot mode toggle" btw */
 .org 0x5D378
@@ -697,7 +802,7 @@ TextZeroTeleport:
     .long 0x001E0F16 /*;  TEL*/
     .long 0x0F1A191C /*; EPOR*/
     .long 0x1E002E00 /*; T - */
-    .long 0x0304FF00
+    .long 0x0506FF00
 
 .org 0x5D38C
 TextCounterForce:
@@ -706,7 +811,7 @@ TextCounterForce:
     .long 0x1E0F1C00 /*; TER */
     .long 0x10191C0D /*; FORC */
     .long 0x0F002E00 /*; E - */
-    .long 0x0506FF00
+    .long 0x0304FF00
 
 
 .org 0x5D3B0
@@ -718,14 +823,17 @@ CustomTestScreenTransfer:
     
 .transferloop:
     lea TextTransferList(%pc),%a1
-    nop
     move.w 0xff8040,%d1
     move.w 0x00(%a1,%d1.w),%d0
     move.w 0x02(%a1,%d1.w),%d4
     move.l 0x04(%a1,%d1.w),%a0
     jsr 0x4614
     addi.w #0x8,0xff8040
+    .ifdef MODE_TOGGLE
+    cmpi.w #0x48,0xff8040
+    .else
     cmpi.w #0x40,0xff8040
+    .endif
     bne .transferloop
     
     /* our own DMA -- this should be no. 0x10-length entries minus 1 */
@@ -762,9 +870,19 @@ TextTransferList:
     .word 0x6622
     .long 0x1FB81
     
-    .word 0xA100
-    .word 0x6788
-    .long 0x5D360 /* TextShootModeChange*/
+    .ifdef MODE_TOGGLE
+        .word 0xA100
+        .word 0x680A
+        .long 0x5D360 /* TextTemporaryAiming*/
+        
+        .word 0xA100
+        .word 0x6708
+        .long 0x5D4A0 /* TextShootModeToggle*/
+    .else
+        .word 0xA100
+        .word 0x6788
+        .long 0x5D360 /* TextShootModeChange*/
+    .endif
     
     .word 0xA100
     .word 0x6910
@@ -799,9 +917,53 @@ PatchDataShootModeDMA:
 ScreenDMAListEnd:
     .long 0x94009304
     
-.org 0x5D480
-PatchDataShootMode:
-    .word 0x8001
-    .word 0x9003
+.ifdef MODE_TOGGLE        
+    .org 0x5D4A0
+    TextShootModeToggle:
+        .long 0x1D121919 /*; SHOO*/
+        .long 0x1E001719 /*; T MO*/
+        .long 0x0E0F001E /*; DE T*/
+        .long 0x19111116 /*; OGGL*/
+        .long 0x0F002E00 /*; E - */
+        .long 0x17190E0F /*; MODE*/
+        .byte 0xFF
+    .endif
     
+    .org 0x5D500 /* CHECK_PISS */
+    mode_toggle_check_pissmode:
+        btst #7,(CTRL0_B6_RELEASED)
+        beq .org_check_pissmode
+        btst #4,(CTRL0_B6_RELEASED) /* hold x */
+        beq .org_check_pissmode
+        /* reverse of piss mode */
+        tst.w PISS_MODE
+        bne .reteq
+.retne:
+        btst #7,(CTRL0_B6_RELEASED) /* guaranteed 1 */
+        rts
+
+.reteq:
+        btst #5,(CTRL0_B6_RELEASED) /* guaranteed 0 */
+        rts
+    
+    .org_check_pissmode:
+        tst.b PISS_MODE+1
+        rts
+
+    .org 0x5D540
+    NearbyPissCheckTrampoline:
+        move.w #0x56,0x4(%a5)
+        move.w #0x08,0x4E(%a5)
+        jmp 0x157D0
+        
+    .org 0x5D558
+        move.b 0x69(%a5),%d1
+        bsr mode_toggle_check_pissmode
+        beq .load_0
+        move.w #0x02,%d0
+        rts
+        
+    .load_0:
+        move.w #0x00,%d0
+        rts
 PATCH_END_injected_code:
