@@ -22,6 +22,8 @@ CTRL0_B6_PRESSED = 0xFFF709
 CTRL0_RELEASED = 0xFFF70A
 CTRL0_B6_RELEASED = 0xFFF70B
 
+LILB = 0xFF2020
+
 CTRL1_DATA = 0x00A10003
 CTRL1_CTRL = 0x00A10009
 
@@ -118,6 +120,11 @@ PATCH_END copy_controls
 PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
 PATCH_END counterforce_check
+
+.org 0x1F404
+PATCH_BEGIN alternate_control_lilb
+    jsr 0x5D300
+PATCH_END alternate_control_lilb
 
 .org 0x1f464
 PATCH_BEGIN alternate_control_view
@@ -514,6 +521,9 @@ SixButtonJumpOrDrop:
 AlternateControlView:
     btst #7,(CTRL0_B6_DOWN)
     beq .skipAlternateControlView
+    btst #7,(LILB)
+    beq .skipAlternateControlView
+    clr.b (LILB)
     
     lea 0xC00004,%a1
     lea 0xC00000,%a0
@@ -537,19 +547,34 @@ AlternateControlView:
     
     /* okay, now let's add new sprites in... */
     move.l #(0x40200000),(%a1) /* 0x0020 */
-    move.l #4*4*3-1,%d0
+    move.l #4*4*6-1,%d0
 
-    lea 0x5D300, %a1
+    lea 0x5D330, %a1
 .loop:
     move.l (%a1)+,(%a0)
     /*add.w #4,%a1*/
     dbra %d0, .loop
     
+    /* update tilemap to show x/y/z buttons */
     lea 0xC00004,%a1
+    
+    /* x */
     move.l #(0x67b00003),(%a1) /* 0xe7b0 */
     move.l #0xA001A003,(%a0)
     move.l #(0x68300003),(%a1) /* 0xe830 */
     move.l #0xA002A004,(%a0)
+    
+    /* z */
+    move.l #(0x69300003),(%a1) /* 0xe7b0 */
+    move.l #0xA009A00B,(%a0)
+    move.l #(0x69b00003),(%a1) /* 0xe830 */
+    move.l #0xA00AA00C,(%a0)
+
+    /* y */
+    move.l #(0x6A300003),(%a1) /* 0xe7b0 */
+    move.l #0xA005A007,(%a0)
+    move.l #(0x6AB00003),(%a1) /* 0xe830 */
+    move.l #0xA006A008,(%a0)
     
     /* enable interrupts */
     move    #0x2300,%sr
@@ -566,23 +591,118 @@ AlternateControlView:
     move.l #00, (%a0)
     move.l #00, (%a0)
     rts
-    
+
 .org 0x5D300
+SetLilB:
+    ori.b #0x80, (LILB)
+    
+    /* original code */
+    jmp 0x4614
+    
+.org 0x5D330
 Sprites:
 
 /* (X) - top left */
     .long 0x00000000
     .long 0x000000EE
     .long 0x0000EE11
+    .long 0x000E1211
+    
+    .long 0x00E11211
+    .long 0x00E11211
+    .long 0x0E111121
+    .long 0x0E111112
+    
+/* (X) - bottom left */
+    .long 0x0E111121
+    .long 0x0E111211
+    .long 0x0DE11211
+    .long 0x00E11211
+    
+    .long 0x00DE1111
+    .long 0x000DEE11
+    .long 0x0000DDEE
+    .long 0x000000DD
+
+/* (X) - top right */    
+    .long 0x00000000
+    .long 0xEE000000
+    .long 0x11EE0000
+    .long 0x1211E000
+
+    .long 0x12111E00
+    .long 0x12111E00
+    .long 0x211111E0
+    .long 0x111111E0
+
+/* (X) - bottom right */    
+    .long 0x211111E0
+    .long 0x121111E0
+    .long 0x12111ED0
+    .long 0x12111E00
+    
+    .long 0x1111ED00
+    .long 0x11EED000
+    .long 0xEEDD0000
+    .long 0xDD000000
+
+/* (Y) - top left */
+    .long 0x00000000
+    .long 0x000000EE
+    .long 0x0000EE11
+    .long 0x000E1211
+    
+    .long 0x00E11211
+    .long 0x00E11211
+    .long 0x0E111121
+    .long 0x0E111112
+    
+/* (Y) - bottom left */
+    .long 0x0E111112
+    .long 0x0E111112
+    .long 0x0DE11112
+    .long 0x00E11112
+    
+    .long 0x00DE1111
+    .long 0x000DEE11
+    .long 0x0000DDEE
+    .long 0x000000DD
+
+/* (Y) - top right */    
+    .long 0x00000000
+    .long 0xEE000000
+    .long 0x11EE0000
+    .long 0x1211E000
+
+    .long 0x12111E00
+    .long 0x12111E00
+    .long 0x211111E0
+    .long 0x111111E0
+
+/* (Y) - bottom right */    
+    .long 0x111111E0
+    .long 0x111111E0
+    .long 0x11111ED0
+    .long 0x11111E00
+    
+    .long 0x1111ED00
+    .long 0x11EED000
+    .long 0xEEDD0000
+    .long 0xDD000000
+
+/* (Z) - top left */
+    .long 0x00000000
+    .long 0x000000EE
+    .long 0x0000EE11
     .long 0x000E1222
     
-    .long 0x00E11211
-    .long 0x00E11211
-    .long 0x0E111211
-    .long 0x0E111222
+    .long 0x00E11111
+    .long 0x00E11111
+    .long 0x0E111111
+    .long 0x0E111112
     
-/* (X) - top right */
-    .long 0x0E111211
+/* (Z) - bottom left */
+    .long 0x0E111121
     .long 0x0E111211
     .long 0x0DE11211
     .long 0x00E11222
@@ -592,21 +712,21 @@ Sprites:
     .long 0x0000DDEE
     .long 0x000000DD
 
-/* (X) - bottom left */    
+/* (Z) - top right */    
     .long 0x00000000
     .long 0xEE000000
     .long 0x11EE0000
     .long 0x2211E000
 
-    .long 0x11211E00
-    .long 0x11211E00
-    .long 0x112111E0
-    .long 0x221111E0
+    .long 0x12111E00
+    .long 0x12111E00
+    .long 0x211111E0
+    .long 0x111111E0
 
-/* (X) - bottom right */    
-    .long 0x112111E0
-    .long 0x112111E0
-    .long 0x11211ED0
+/* (Z) - bottom right */    
+    .long 0x111111E0
+    .long 0x111111E0
+    .long 0x11111ED0
     .long 0x22111E00
     
     .long 0x1111ED00
