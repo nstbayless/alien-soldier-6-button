@@ -11,6 +11,8 @@
     .byte 0x71
 .endm
 
+
+
 /* just so you know, the B6_ names are meaningless now. Ignore the names. */
 
 CTRL0_DOWN = 0xFFF706
@@ -77,9 +79,9 @@ PATCH_BEGIN piss_mode_check
 PATCH_END piss_mode_check
 
 .org 0x15BB8
-PATCH_BEGIN no_jump_4
-    jmp 0x5CD40
-PATCH_END no_jump_4
+PATCH_BEGIN jump_dash_check
+    jmp 0x5CD60
+PATCH_END jump_dash_check
 
 .org 0x15C20
 PATCH_BEGIN reverse_dash_check
@@ -98,7 +100,7 @@ PATCH_END air_hang_dash_check
 
 .org 0x1615C
 PATCH_BEGIN air_hang_piss_mode_check
-    jmp 0x5CF50
+    jmp 0x5CF60
 PATCH_END air_hang_piss_mode_check
 
 .org 0x166EA
@@ -117,10 +119,17 @@ PATCH_BEGIN counterforce_check
     jmp 0x5CEA0
 PATCH_END counterforce_check
 
-.org 0x16DA6
-PATCH_BEGIN pit_remove
-    
-PATCH_END pit_remove
+.org 0x1f464
+PATCH_BEGIN alternate_control_view
+    nop
+    nop
+    jsr 0x5D1E0
+PATCH_END alternate_control_view
+
+.org 0x23D7A
+PATCH_BEGIN demo_input
+    jsr 0x5D150
+PATCH_END demo_input
 
 .org 0x05CB78
 PATCH_BEGIN_injected_code:
@@ -178,8 +187,7 @@ Subroutine:
 
     move.b %d1,(CTRL0_B6_PRESSED)
     
-    move.b (CTRL0_B6_DOWN),%d1
-    tst.b %d1
+    btst #7,(CTRL0_B6_DOWN)
     beq .skipToRts
     
     move.b #0x40,(%a2)
@@ -208,27 +216,30 @@ Subroutine:
 .skipToRts:
     move.b (CTRL0_B6_PRESSED),%d1
     
+    /* very shortly after this, control goes to B6Pressed */
     rts
 
 .org 0x05CCA0
 B6Pressed:
     move.b (CTRL0_B6_RELEASED),%d0
-    andi.b #0x80,%d0
-    tst.b %d0
+    btst #7,%d0
     beq .skipToRts2
     
-    move.b (CTRL0_B6_RELEASED),%d0
     move.b (CTRL0_B6_DOWN),%d1
     move.b %d0,(CTRL0_B6_DOWN)
     eor.b #0xFF,%d1
     and.b %d0,%d1
+    and #0x0F,%d1
+    
+    /* _PRESSED now contains xyzm buttons pressed this frame. */
     move.b %d1,(CTRL0_B6_PRESSED)
     
-    /* write 0 to released */
-    andi.b #0x00, %d1
-    move.b %d1,(CTRL0_B6_RELEASED)
+    /* clear released */
+    clr.b (CTRL0_B6_RELEASED)
 
 .skipToRts2:
+    /* shortly after this, control goes to MyCopyControls */
+    /* (but during demo, will first go to DemoInput ) */
     rts
 
 .org 0x05CCF0
@@ -274,10 +285,12 @@ MyJumpDashCheck:
     jmp 0x015C1E
 
 .sixbuttonjump:
-    jmp 0x00015BF2
+    bra SixButtonJumpOrDrop
+    /*jmp 0x00015BF2*/
 
 .sixbuttondodash:
-    jmp 0x15BCA
+    /* skip the on-platform check here; go straight to dash. */
+    jmp 0x15936
 
 .threebuttonjumpdash:
     btst #5,0x006A(%a5)
@@ -291,7 +304,7 @@ MyAirJumpDashCheck:
 .sixbuttonairjumpdash:
 
     /* check piss mode, too */
-    jsr 0x5CFE0 /*CheckPissMode*/
+    jsr 0x5CFF0 /*CheckPissMode*/
 
     /* Z */
     btst #0,(CTRL0_B6_RELEASED)
@@ -357,17 +370,23 @@ MyCounterforce:
 MyCopyControls:
     move.b 0xFFF706,0x69(%a5)
     move.b 0xFFF708,0x6A(%a5)
+    
+    btst #6,(CTRL0_B6_PRESSED)
+    bne .skipcopyb6
+    
+    /* RELEASED is where we will check for PRESSED from now on, stupidly. */
     move.b (CTRL0_B6_PRESSED),(CTRL0_B6_RELEASED)
     
-    /* transfer bit 7 of _DOWN to _RELEASED, to mark 6 button and not in cutscene */
+    /* transfer bit 7 of _DOWN to _RELEASED, to mark 6-button and not in cutscene */
     move.b %d0, (CTRL0_B6_PRESSED)
     move.b (CTRL0_B6_DOWN),%d0
     andi.b #0x80, %d0
     or.b %d0,(CTRL0_B6_RELEASED)
     move.b (CTRL0_B6_PRESSED), %d0
+.skipcopyb6:
     rts
     
-.org 0x5CF50
+.org 0x5CF60
 MyHangPissModeCheck:
     btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonhangpissmode
@@ -395,7 +414,7 @@ MyHangPissModeCheck:
     btst #6,0x006A(%a5)
     jmp 0x16162
     
-.org 0x5CFE0
+.org 0x5CFF0
 CheckPissMode:
     /* mode */
     btst #3,(CTRL0_B6_RELEASED)
@@ -464,5 +483,98 @@ ReverseDashCheck:
 .threebuttonreversedashcheck:
     btst #5,0x006A(%a5)
     jmp 0x15C26
+
+.org 0x5D150
+DemoInput:
+    move.b 0xFFFF52,(CTRL0_DOWN)
+    ori.b #0x40,(CTRL0_B6_PRESSED)
+    rts
+    
+SixButtonJumpOrDrop:
+    /* holding down? */
+    btst #1,0x0069(%a5)
+    beq .regularjump
+    
+    /* unknown */
+    btst #6,0xFF8245
+    bne .regularjump
+    
+    /* unknown */
+    btst #2,0x6(%a5)
+    beq .regularjump
+    
+.drop:
+    jmp 0x15bea
+    
+.regularjump:
+    jmp 0x15BF2
+    
+/* safe to clobber: a0, a1, d0 */
+.org 0x5D1E0
+AlternateControlView:
+    /* DMA */
+    
+    lea 0xC00004,%a1
+    lea 0xC00000,%a0
+    
+    /* enable DMA transfer, critical section -- shoddy code! Improve!
+        What's the correct way to enter a critical section..? */
+    /*move.w #(0x8000 + (0 << 8) + 0x04),(%a1)*/
+    /*move.w #(0x8000 + (1 << 8) + 0x74),(%a1)*/
+    
+    /* I TIED SO HARD TO GET DMA TO WORK. IT DID NOT. */
+
+move.w #(0x8000 + (15 << 8) + 0x02),(%a1)   /*Auto-Increment*/    
+    move.l #(0x400000 + (0xE7B0 >> 14) + (0xE7B0 << 16)),(%a1)
+    
+    move.l #00000000,(%a0)
+    move.l #00000000,(%a0)
+    move.l #00000000,(%a0)
+    
+    move.l #(0x400000 + (0xE8B0 >> 14) + (0xE8B0 << 16)),(%a1)
+    move.l #00000000,(%a0)
+    move.l #00000000,(%a0)
+    move.l #00000000,(%a0)
+    
+    /* length */
+    /*
+    move.w #(0x8000 + (19 << 8) + 0x04),(%a1)
+    move.w #(0x8000 + (20 << 8) + 0x00),(%a1)
+    */
+    /* DMA Copy Source */
+    /*
+    move.w #(0x8000 + (23 << 8) + ((0x5D300 >> 17) & 0xFF)),(%a1)
+    move.w #(0x8000 + (22 << 8) + ((0x5D300 >> 9) & 0xFF)),(%a1)
+    move.w #(0x8000 + (21 << 8) + ((0x5D300 >> 1) & 0xFF)),(%a1)
+    */
+
+    /* destination address */
+    /*move.l #(0xA7BC0083),(%a0)*/
+
+    /*move.l #(0x04000000 + (0xe7bc >> 14) + ((0xe7bc & 0x3FFF) << 16)),(%a1)*/
+    /*move.l #(0x04000080 + (0xe7bc >> 14) + ((0xe7bc & 0x3FFF) << 16)),(%a1)*/
+    /*move.l #(0x04000080),(%a1)*/
+
+    /* disable DMA transfer (return to previous value; was 0x64 before, it seems) */
+    /*move.w #(0x8000 + (1 << 8) + 0x64),(%a1)*/
+    /*move.w #(0x8000 + (0 << 8) + 0x14),(%a1)*/
+    
+.skipAlternateControlView:
+    /* original code */
+    jsr 0x1f784
+    btst #7,0xfff708
+    rts
+
+.org 0x5D300
+DMACopySource:
+    .byte 0x07
+    .byte 0x06
+    .byte 0x05
+    .byte 0x04
+    .byte 0x03
+    .byte 0x02
+    .byte 0x01
+    .byte 0x10
+    .byte 0x20
 
 PATCH_END_injected_code:
