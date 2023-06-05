@@ -79,6 +79,13 @@ PATCH_END jump_to_subroutine
     moveq #-1,%d0
     PATCH_END fix_password_dir_down
 
+.ifdef MODE_TOGGLE
+.org 0xF968
+    PATCH_BEGIN detour_to_nearby_piss_check_1
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_1
+.endif
+
 .org 0x15168
 PATCH_BEGIN pit_mode_buttons
     jmp 0x5D020
@@ -87,15 +94,36 @@ PATCH_END pit_mode_buttons
 .ifdef MODE_TOGGLE
     /* check piss colour immediate mode */
     .org 0x15254
-    PATCH_BEGIN detour_to_nearby_piss_check_1
+    PATCH_BEGIN detour_to_nearby_piss_check_13
     bsr NearbyPissCheck
-    PATCH_END detour_to_nearby_piss_check_1
+    PATCH_END detour_to_nearby_piss_check_13
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x15450
+    PATCH_BEGIN detour_to_nearby_piss_check_11
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_11
 .endif
 
 .org 0x155B0
 PATCH_BEGIN piss_mode_check
     jmp 0x05CCF0 /*MyPissModeCheck*/
 PATCH_END piss_mode_check
+
+.ifdef MODE_TOGGLE
+.org 0x15654
+    PATCH_BEGIN detour_to_nearby_piss_check_12
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_12
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x15664
+    PATCH_BEGIN detour_to_nearby_piss_check_14
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_14
+.endif
 
 .ifdef MODE_TOGGLE
 .org 0x156F4
@@ -138,15 +166,50 @@ PATCH_BEGIN air_hang_piss_mode_check
     jmp 0x5CF60
 PATCH_END air_hang_piss_mode_check
 
+.ifdef MODE_TOGGLE
+.org 0x1643A
+    PATCH_BEGIN detour_to_nearby_piss_check_26
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_26
+.endif
+
 .org 0x1654E
 PATCH_BEGIN reverse_crouch_dash_jump_check
     jmp 0x5D1A0
 PATCH_END reverse_crouch_dash_jump_check
 
+.ifdef MODE_TOGGLE
+.org 0x16586
+    PATCH_BEGIN detour_to_nearby_piss_check_15
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_15
+.endif
+
 .org 0x166EA
 PATCH_BEGIN reverse_piss_check  
     jmp 0x5D080
 PATCH_END reverse_piss_check
+
+.ifdef MODE_TOGGLE
+.org 0x1678A
+    PATCH_BEGIN detour_to_nearby_piss_check_16
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_16
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1679A
+    PATCH_BEGIN detour_to_nearby_piss_check_18
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_18
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1682C
+    PATCH_BEGIN detour_to_nearby_piss_check_19
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_19
+.endif
 
 .org 0x16B0A
 PATCH_BEGIN copy_controls
@@ -182,11 +245,39 @@ PATCH_END detour_to_load_piss
 .endif
 
 .ifdef MODE_TOGGLE
+.org 0x17052
+    PATCH_BEGIN detour_to_nearby_piss_check_20
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_20
+.endif
+
+.ifdef MODE_TOGGLE
     /* check piss colour immediate mode */
     .org 0x17086
     PATCH_BEGIN detour_to_nearby_piss_check_2
     bsr NearbyPissCheck
     PATCH_END detour_to_nearby_piss_check_2
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x170C2
+    PATCH_BEGIN detour_to_nearby_piss_check_21
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_21
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x170FE
+    PATCH_BEGIN detour_to_nearby_piss_check_22
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_22
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x17E60
+    PATCH_BEGIN detour_to_nearby_piss_check_23
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_23
 .endif
 
 .ifdef MODE_TOGGLE
@@ -197,10 +288,80 @@ PATCH_END detour_to_load_piss
 .endif
 
 .ifdef MODE_TOGGLE
+.org 0x182Ce
+    PATCH_BEGIN detour_to_nearby_piss_check_24
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_24
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x18360
+    PATCH_BEGIN detour_to_nearby_piss_check_27
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_27
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x18444
+    PATCH_BEGIN detour_to_nearby_piss_check_28
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_28
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1856C
+    PATCH_BEGIN detour_to_nearby_piss_check_29
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_29
+.endif
+
+.ifdef MODE_TOGGLE
     .org 0x18718
     PATCH_BEGIN detour_to_nearby_piss_check_7
     bsr NearbyPissCheck
     PATCH_END detour_to_nearby_piss_check_7
+.endif
+
+.ifdef MODE_TOGGLE
+    .org 0x19e84
+    PATCH_BEGIN detour_to_nearby_piss_check_8
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_8
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x19EFC
+    PATCH_BEGIN detour_to_nearby_piss_check_31
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_31
+.endif
+
+.ifdef MODE_TOGGLE
+    .org 0x19f54
+    PATCH_BEGIN detour_to_nearby_piss_check_9
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_9
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1CCF8
+    PATCH_BEGIN detour_to_nearby_piss_check_32
+    bsr NearbyPissCheck
+    PATCH_END detour_to_nearby_piss_check_32
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1EEAC
+    PATCH_BEGIN detour_to_nearby_piss_check_33
+    /*bsr NearbyPissCheck*/
+    PATCH_END detour_to_nearby_piss_check_33
+.endif
+
+.ifdef MODE_TOGGLE
+.org 0x1F1C2
+    PATCH_BEGIN detour_to_nearby_piss_check_34
+    /*bsr NearbyPissCheck*/
+    PATCH_END detour_to_nearby_piss_check_34
 .endif
 
 .org 0x1f3e6
