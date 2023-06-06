@@ -13,15 +13,13 @@ There are two different versions of the patch; `alien-soldier-6-button-hold.ips`
 - You can now toggle shoot modes by pressing X or Mode at any time. In the "hold" variation, instead of pressing X, you must hold X to temporarily toggle shoot modes (but the Mode button still toggles shoot modes on press). (Down+A no longer swaps shoot mode in 6-button mode.)
 - The new controls are displayed in the "control test" screen, assuming a 6-button controller is inserted.
 - On the password input screen, pressing up now increments the number and down decrements.
-- Bypasses internal checksum verification. However, the internal region lock is not bypassed (see below).
+- Bypasses internal checksum verification and region lock.
 
 ## Patching Instructions
 
 Only the Japanese ROM is supported. Please verify the ROM's hash before patching, which is listed below.
 
 You can apply the patch using FLIPS or any other IPS patcher.
-
-If you wish to play the Japanese ROM on a US console, you'll need to bypass the region lock with a Game Genie. You can find a suitable Game Genie code here: https://etherealgames.com/sega-genesis/a/alien-soldier/game-genie-codes/
 
 ## Source Code
 

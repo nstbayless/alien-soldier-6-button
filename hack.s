@@ -42,6 +42,12 @@ CTRL1_CTRL = 0x00A10009
     nop
     PATCH_END skip_checksum_death
 
+/* disable region lock */    
+.org 0x4CE
+    PATCH_BEGIN skip_region_lock
+    nop
+    PATCH_END skip_region_lock
+
 .org 0x33a8
     PATCH_BEGIN read_controller_init
     jsr  0x05CB78 /*SubroutineInit*/
