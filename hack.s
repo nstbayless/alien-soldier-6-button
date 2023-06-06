@@ -143,13 +143,13 @@ PATCH_END counterforce_check
 .ifdef MODE_TOGGLE
 .org 0x16C90
 PATCH_BEGIN piss_mode_yellow_xor_x
-    /*jsr 0x5D500*/
+    jsr 0x5D500
 PATCH_END piss_mode_yellow_xor_x
 .endif
 
 .org 0x1f3e6
 PATCH_BEGIN test_screen_patch
-    jmp 0x5D3B0
+    jmp 0x5D3C8
 PATCH_END test_screen_patch
 
 .org 0x23D7A
@@ -309,12 +309,16 @@ MyPissModeCheck:
     jmp 0x155B6
 
 .nopissmode:
+.ifdef RETAIN_ORIGINAL
+    bra .threebuttonpissmode
+.else
     btst     #6,0x006A(%a5)
     beq .noAButton
     jmp 0x155C2
     
 .noAButton:
     jmp 0x155C8
+.endif
     
 .org 0x5CD60
 MyJumpDashCheck:
@@ -330,7 +334,11 @@ MyJumpDashCheck:
     jmp 0x015C1E
 
 .sixbuttonjump:
-    bra SixButtonJumpOrDrop
+    .ifdef RETAIN_ORIGINAL
+        bra .threebuttonjumpdash
+    .else
+        bra SixButtonJumpOrDrop
+    .endif
     /*jmp 0x00015BF2*/
 
 .sixbuttondodash:
@@ -354,10 +362,14 @@ MyAirJumpDashCheck:
     /* Z */
     btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttonairdash
-    btst #5,0x006A(%a5)
-    bne .sixbuttonairjump
-    /* no air jump */
-    jmp 0x00015D8E
+    .ifdef RETAIN_ORIGINAL
+        bra .threebuttonairjumpdash
+    .else
+        btst #5,0x006A(%a5)
+        bne .sixbuttonairjump
+        /* no air jump */
+        jmp 0x00015D8E
+    .endif
     
 .sixbuttonairjump:
     jmp 0x15D7A
@@ -378,9 +390,13 @@ MyHangDashJumpCheck:
     /* Z */
     btst #0,(CTRL0_B6_RELEASED)
     bne .sixbuttonhangdash
-    btst #5,0x006A(%a5)
-    bne .sixbuttonhangjump
-    jmp 0x16116
+    .ifdef RETAIN_ORIGINAL
+        bra .threebuttonhangjumpdash
+    .else
+        btst #5,0x006A(%a5)
+        bne .sixbuttonhangjump
+        jmp 0x16116
+    .endif
     
 .sixbuttonhangjump:
     jmp 0x160FA
@@ -400,7 +416,11 @@ MyCounterforce:
     /* cool kid counterforce */
     /* Y */
     btst #1,(CTRL0_B6_RELEASED)
-    beq .nocounterforce
+    .ifdef RETAIN_ORIGINAL
+        beq .threebuttoncounterforce
+    .else
+        beq .nocounterforce
+    .endif
     jmp 0x00016B32
     
 .threebuttoncounterforce:
@@ -472,11 +492,16 @@ MyHangPissModeCheck:
     btst #2,(CTRL0_B6_RELEASED)
     bne .yeshangpissmode
 .endif
-    
-.nohangpissmode:
-    btst #6,0x006A(%a5)
-    beq .nohangpisswitch
-    jmp 0x16174
+
+.ifdef RETAIN_ORIGINAL
+    bra .threebuttonhangpissmode
+.else
+
+    .nohangpissmode:
+        btst #6,0x006A(%a5)
+        beq .nohangpisswitch
+        jmp 0x16174
+.endif
     
 .nohangpisswitch:
     jmp 0x16170
@@ -523,12 +548,14 @@ ReversePissCheck:
 
 .sixbuttonreversepisscheck:
     bsr CheckPissMode
-    btst #6,0x6A(%a5)
-    bne .reversepissmenu
-    jmp 0x16702
-    
-.reversepissmenu:
-    jmp 0x166FC
+.ifndef RETAIN_ORIGINAL
+        btst #6,0x6A(%a5)
+        bne .reversepissmenu
+        jmp 0x16702
+        
+    .reversepissmenu:
+        jmp 0x166FC
+.endif
 
 .threebuttonreversepisscheck:
     btst #6,0x6A(%a5)
@@ -543,9 +570,12 @@ ReverseDashCheck:
     /* check z */
     btst #0,(CTRL0_B6_RELEASED)
     bne .reversedash
-
+.ifdef RETAIN_ORIGINAL
+    bra .threebuttonreversedashcheck
+.else
     btst #5,0x006A(%a5)
     bne .reversejump
+.endif
     
 .noreversejump:
     jmp 0x15C1E
@@ -565,7 +595,8 @@ DemoInput:
     move.b 0xFFFF52,(CTRL0_DOWN)
     ori.b #0x40,(CTRL0_B6_PRESSED)
     rts
-    
+
+.ifndef RETAIN_ORIGINAL
 SixButtonJumpOrDrop:
     /* holding down? */
     btst #1,0x0069(%a5)
@@ -585,6 +616,8 @@ SixButtonJumpOrDrop:
 .regularjump:
     jmp 0x15BF2
     
+.endif
+    
 .org 0x5D1A0
 ReverseCrouchAirDash:
     btst #7,(CTRL0_B6_RELEASED)
@@ -595,8 +628,12 @@ ReverseCrouchAirDash:
     btst #0,(CTRL0_B6_RELEASED)
     bne .reversecrouchdash
 
-    btst #5,0x006A(%a5)
-    bne .reversecrouchjump
+    .ifdef RETAIN_ORIGINAL
+        bra .threebuttonreversecrouchdashcheck
+    .else
+        btst #5,0x006A(%a5)
+        bne .reversecrouchjump
+    .endif
     
 .noreversecrouchjump:
     jmp 0x16564
@@ -766,30 +803,52 @@ Sprites:
         .long 0x0E0F000D /*; DE C*/
         .long 0x120B1811 /*; HANG*/
         .long 0x0F002E00 /*; E - */
-        .long 0x0102FF00
+        .ifdef RETAIN_ORIGINAL
+            .long 0x01020019 /*; () O */
+            .long 0x1C00E6E7
+            .long 0x00E800E0
+            .word 0xE1FF
+        .else
+            .long 0x0102FF00
+        .endif
+        
 .endif
     
 /* could add "shoot mode toggle" btw */
-.org 0x5D378
+.org 0x5D388
 TextZeroTeleport:
     /* copied from 0x1FBA7 ... 0x1FBBF */
     .long 0x240F1C19 /*; ZERO*/
     .long 0x001E0F16 /*;  TEL*/
     .long 0x0F1A191C /*; EPOR*/
     .long 0x1E002E00 /*; T - */
-    .long 0x0506FF00
+    .ifdef RETAIN_ORIGINAL
+        .long 0x05060019
+        .long 0x1C00E6E7
+        .long 0x00E800E4
+        .word 0xE5FF
+    .else
+        .long 0x0506FF00
+    .endif
 
-.org 0x5D38C
+.org 0x5D3A8
 TextCounterForce:
     /* copied from 0x1FBBf ... 0x1FBD7 */
     .long 0x0D191F18 /*; COUN*/
     .long 0x1E0F1C00 /*; TER */
     .long 0x10191C0D /*; FORC */
     .long 0x0F002E00 /*; E - */
-    .long 0x0304FF00
+    .ifdef RETAIN_ORIGINAL
+        .long 0x03040019
+        .long 0x1C00E6E7
+        .long 0x00E800E2
+        .word 0xE3FF
+    .else
+        .long 0x0304FF00
+    .endif
 
 
-.org 0x5D3B0
+.org 0x5D3C8
 CustomTestScreenTransfer:
     addq.w #2,0xffa29c
     clr.w 0xff8040
@@ -828,53 +887,63 @@ CustomTestScreenTransfer:
 .orgScreenTransfer:
     jmp 0x1F3EE
     
+.ifdef RETAIN_ORIGINAL
+    .ifdef MODE_TOGGLE
+        OFFSET = -0x2
+    .else
+        OFFSET = 0x0
+    .endif
+.else
+    OFFSET = 0x0
+.endif
+    
 TextTransferList:
     .word 0x8100
     .word 0x629C
     .long 0x1FB57
     
     .word 0xA100
-    .word 0x6410
+    .word 0x6410+OFFSET
     .long 0x1FB64
     
     .word 0xA100
-    .word 0x6522
+    .word 0x6522+OFFSET
     .long 0x1FB77
     
     .word 0xA100
-    .word 0x6622
+    .word 0x6622+OFFSET
     .long 0x1FB81
     
     .ifdef MODE_TOGGLE
         .word 0xA100
-        .word 0x680C
+        .word 0x680C+OFFSET
         .long 0x5D360 /* TextTemporaryAiming*/
         
         .word 0xA100
-        .word 0x6708
+        .word 0x6708+OFFSET
         .long 0x5D4A0 /* TextShootModeToggle*/
     .else
         .word 0xA100
-        .word 0x6788
+        .word 0x6788+OFFSET
         .long 0x5D360 /* TextShootModeChange*/
     .endif
     
     .word 0xA100
-    .word 0x6910
-    .long 0x5D38C /* TextCounterForce */
+    .word 0x6910+OFFSET
+    .long 0x5D3A8 /* TextCounterForce */
     
     .word 0xA100
-    .word 0x6A10
-    .long 0x5D378 /* TextZeroTeleport*/
+    .word 0x6A10+OFFSET
+    .long 0x5D388 /* TextZeroTeleport*/
     
     .word 0xA100
-    .word 0x6B1A
+    .word 0x6B1A+OFFSET
     .long 0x1FBD7
     
 ScreenDMAList:
 TileDataDMA:
     /* length of data (Sprites) */
-    .long 0x940093C0
+    .long 0x940093C8
     
     /* address of Sprites divided by 2. */
     .long 0x8F029702 /* auto-increment: 2; addr hi: 0x02*/
@@ -901,13 +970,16 @@ ScreenDMAListEnd:
         .long 0x19111116 /*; OGGL*/
         .long 0x0F002E00 /*; E - */
         .long 0x17190E0F /*; MODE*/
-        .byte 0xFF
+        .ifdef RETAIN_ORIGINAL
+            .long 0x00191C00 /*;  OR */
+            .long 0xE6E700E8
+            .long 0x00E0E1FF
+        .else
+            .long 0x0102FF00
+        .endif
         
     .org 0x5D500
     CheckPissColour:
-        tst.w (PISS_MODE)
-        rts
-        
         btst #7,(CTRL0_B6_RELEASED)
         beq .orgCheckPissColour
         btst #5,(CTRL0_B6_RELEASED)

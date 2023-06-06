@@ -62,6 +62,8 @@ function build() {
 
 build "alien-soldier-6-button-toggle" ""
 build "alien-soldier-6-button-hold" "-defsym MODE_TOGGLE=1"
+build "alien-soldier-6-button-toggle-hybrid" "-defsym RETAIN_ORIGINAL=1"
+build "alien-soldier-6-button-hold-hybrid" "-defsym MODE_TOGGLE=1 -defsym RETAIN_ORIGINAL=1"
 
 OUT="alien-soldier-6-button"
 
@@ -71,8 +73,11 @@ then
 fi
 
 mkdir "$OUT"
+mkdir "$OUT/hybrid"
 cp alien-soldier-6-button-toggle.ips "./$OUT"
 cp alien-soldier-6-button-hold.ips "./$OUT"
+cp alien-soldier-6-button-toggle-hybrid.ips "./$OUT"
+cp alien-soldier-6-button-hold-hybrid.ips "./$OUT"
 cp README.md "./$OUT/README.txt"
 
 7z a "./$OUT.zip" "./$OUT"
