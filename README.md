@@ -39,4 +39,5 @@ JP ROM:
 - ASM Hacking: NaOH
 - Graphics: MiniMacro
 - Design: TwistC
+- Beta Testing: TwistC, Smedis2
 - Hardware Testing: TwistC
