@@ -60,5 +60,19 @@ function build() {
     ./flips/flips-linux -c ./base.md ./$hack.md ./$hack.ips
 }
 
-build "alien-soldier-6-button"
-build "alien-soldier-6-button-mode" "-defsym MODE_TOGGLE=1"
+build "alien-soldier-6-button-toggle" ""
+build "alien-soldier-6-button-hold" "-defsym MODE_TOGGLE=1"
+
+OUT="alien-soldier-6-button"
+
+if [ -d "$OUT" ]
+then
+    rm -r "$OUT"
+fi
+
+mkdir "$OUT"
+cp alien-soldier-6-button-toggle.ips "./$OUT"
+cp alien-soldier-6-button-hold.ips "./$OUT"
+cp README.md "./$OUT/README.txt"
+
+7z a "./$OUT.zip" "./$OUT"

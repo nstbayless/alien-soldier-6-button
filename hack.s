@@ -1,3 +1,6 @@
+/* Before you ask -- I could not get m68k-linux-gnu-as to assemble jmp/jsr to absolute addresses
+   by label. That's why you'll se a lot of jsr 0x05CB78 and so on in this code. */
+
 .macro PATCH_BEGIN label
     PATCH_BEGIN_\label:
 .endm
@@ -742,12 +745,12 @@ Sprites:
 .ifdef MODE_TOGGLE
     TextTemporaryAiming:
         /* copied from 0x1FB8B ... 0x1FBA7 */
-        .long 0x1E0F171A /*; TEMP*/
-        .long 0x191C0B1C /*; ORAR*/
-        .long 0x23000B13 /*; Y AI*/
-        .long 0x17131811 /*; MING*/
-        .long 0x002E0001 /*;  - (*/
-        .long 0x02FF0000 /*; )\  */
+        .long 0x1D121919 /*; SHOO*/
+        .long 0x1E001719 /*; T MO*/
+        .long 0x0E0F0012 /*; DE H*/
+        .long 0x19160E00 /*; OLD */
+        .long 0x2E000102 /*; - ()*/
+        .byte 0xFF /*; \  */
 .else
 
     TextShootModeChange:
@@ -838,7 +841,7 @@ TextTransferList:
     
     .ifdef MODE_TOGGLE
         .word 0xA100
-        .word 0x680A
+        .word 0x680C
         .long 0x5D360 /* TextTemporaryAiming*/
         
         .word 0xA100
