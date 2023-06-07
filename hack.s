@@ -845,7 +845,7 @@ TextCounterForce:
     .long 0x0F002E00 /*; E - */
     .ifdef RETAIN_ORIGINAL
         .long 0x03040019
-        .long 0x1C00E6E7
+        .long 0x1C00E2E3
         .long 0x00E800E2
         .word 0xE3FF
     .else
