@@ -72,12 +72,17 @@ then
     rm -r "$OUT"
 fi
 
+if [ -d "$OUT.zip" ]
+then
+    rm "$OUT.zip"
+fi
+
 mkdir "$OUT"
 mkdir "$OUT/hybrid"
 cp alien-soldier-6-button-toggle.ips "./$OUT"
 cp alien-soldier-6-button-hold.ips "./$OUT"
-cp alien-soldier-6-button-toggle-hybrid.ips "./$OUT"
-cp alien-soldier-6-button-hold-hybrid.ips "./$OUT"
+cp alien-soldier-6-button-toggle-hybrid.ips "./$OUT/hybrid"
+cp alien-soldier-6-button-hold-hybrid.ips "./$OUT/hybrid"
 cp README.md "./$OUT/README.txt"
 
 7z a "./$OUT.zip" "./$OUT"
