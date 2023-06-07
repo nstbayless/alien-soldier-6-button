@@ -151,6 +151,13 @@ PATCH_BEGIN piss_mode_yellow_xor_x
 PATCH_END piss_mode_yellow_xor_x
 .endif
 
+.ifndef RETAIN_ORIGINAL
+    .org 0x19EA2
+    PATCH_BEGIN skip_down_a_floating
+    jmp 0x05D580 
+    PATCH_END skip_down_a_floating
+.endif
+
 .org 0x19F70
 PATCH_BEGIN floating_dash
     jsr 0x5D540
@@ -1020,5 +1027,17 @@ FloatingDash:
     
 .yesfloatingdash:
     jmp 0x19F7A
+    
+.ifndef RETAIN_ORIGINAL
+    .org 0x05D580
+    SkipFloatingDownA:
+        btst #7,(CTRL0_B6_RELEASED)
+        beq .threeButtonFloatingDownA
+        jmp 0x19EAC
+    
+    .threeButtonFloatingDownA:
+        btst #1,0x69(%a5)
+        jmp 0x19EA8
+.endif
     
 PATCH_END_injected_code:
