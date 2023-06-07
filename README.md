@@ -1,4 +1,4 @@
-# 6-Button Controller Support for Alien Soldier (v1.1)
+# 6-Button Controller Support for Alien Soldier (v1.2)
 
 *By NaOH, with contributions from TwistC and MiniMacro*
 
@@ -32,7 +32,12 @@ The assembly and build scripts for this hack are available on GitHub. Please tak
 
 ## Changelog
 
+v1.2
+
+    - corrected hybrid counterforce text in controls menu
+
 v1.1:
+
     - added hybrid variant
     - fixed a bug in the hold variant where pressing or releasing X during hitstun toggles shoot mode like pressing Mode would.
     - fixed dash and shoot mode inputs in certain late-game sections
