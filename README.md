@@ -1,4 +1,4 @@
-# 6-Button Controller Support for Alien Soldier
+# 6-Button Controller Support for Alien Soldier (v1.1)
 
 *By NaOH, with contributions from TwistC and MiniMacro*
 
@@ -6,14 +6,19 @@
 
 This hack adds support for 6-button controllers, while retaining legacy support for 3-button controllers. Depending on whether a 3-button or 6-button controller is inserted into the console, a different control scheme will be used.
 
-There are two different versions of the patch; `alien-soldier-6-button-hold.ips` is recommended if you are using a controller with trigger buttons, whereas `alien-soldier-6-button-toggle.ips` is recommended if you are using a standard 6-button controller.
+The recommended variant is `alien-soldier-6-button-toggle.ips`, but if you are particular, then there are two different configuration decisions to make (see "Variants," below.)
 
 - You can now dash by pressing Z. (Down+C no longer dashes in 6-button mode.)
 - You can now perform the "Counter Force" parry manoeuvre by pressing Y. (Double-tap B no longer parries in 6-button mode.)
-- You can now toggle shoot modes by pressing X or Mode at any time. In the "hold" variation, instead of pressing X, you must hold X to temporarily toggle shoot modes (but the Mode button still toggles shoot modes on press). (Down+A no longer swaps shoot mode in 6-button mode.)
+- You can now toggle shoot modes by pressing X or Mode at any time. (Down+A no longer swaps shoot mode in 6-button mode.)
 - The new controls are displayed in the "control test" screen, assuming a 6-button controller is inserted.
 - On the password input screen, pressing up now increments the number and down decrements.
 - Bypasses internal checksum verification and region lock.
+
+## Variants
+
+- "Hold" vs "Toggle": In the "Hold" variant of the hack, the shoot mode is only temporarily changed by holding X. (It can still be toggled with the Mode button, however.) This is useful if your controller has shoulder buttons, or for some keyboard layouts. However, it's inconvenient for standard 6-button controllers.
+- "Hybrid" variants accept the original 3-button control combo-inputs in addition to the new 6-button controls. This is useful for those with strong muscle memory of the original game. However, it is not recommended for most players due to the likelihood of accidentally triggering an unintended input.
 
 ## Patching Instructions
 
@@ -24,6 +29,13 @@ You can apply the patch using FLIPS or any other IPS patcher.
 ## Source Code
 
 The assembly and build scripts for this hack are available on GitHub. Please take a look: https://github.com/nstbayless/alien-soldier-6-button
+
+## Changelog
+
+v1.1:
+    - added hybrid variant
+    - fixed a bug in the hold variant where pressing or releasing X during hitstun toggles shoot mode like pressing Mode would.
+    - fixed dash and shoot mode inputs in certain late-game sections
 
 ## ROM Hashes
 

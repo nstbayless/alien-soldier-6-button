@@ -24,6 +24,10 @@ CTRL0_RELEASED = 0xFFF70A
 CTRL0_B6_RELEASED = 0xFFF70B
 PISS_MODE = 0xFFA22A /* word; in bit 1 */
 
+.ifdef MODE_TOGGLE
+    LAST_COPIED_HOLD_X = 0xFFFFF7 /* still need to verify this is unused! */
+.endif
+
 /* queue is in sets of 0x10-length entries sent to 0xC00004
    from routine at 0x000DB2. To add to the queue, prepend/decrement!
    (grows downward from 0xFFF3F0?). */
@@ -35,7 +39,7 @@ DMA_DATA = 0xFFF70E
 CTRL1_DATA = 0x00A10003
 CTRL1_CTRL = 0x00A10009
 
-/* disable checksum check */
+/* neutralize checksum */
 .org 0x36C
     PATCH_BEGIN skip_checksum_death
     nop
@@ -257,15 +261,6 @@ B6Pressed:
     btst #7,%d0
     beq .skipToRts2
     
-    .ifdef MODE_TOGGLE
-        /* check if x pressed OR released */
-        move.b (CTRL0_B6_DOWN),%d1
-        eor.b %d0,%d1
-        andi.b #0x4,%d1
-        lsl.b #2,%d1
-        move.b %d1,(CTRL0_B6_PRESSED)
-    .endif
-    
     move.b (CTRL0_B6_DOWN),%d1
     move.b %d0,(CTRL0_B6_DOWN)
     eor.b #0xFF,%d1
@@ -273,11 +268,7 @@ B6Pressed:
     and #0x0F,%d1
     
     /* _PRESSED now contains xyzm buttons pressed this frame. */
-    .ifdef MODE_TOGGLE
-        or.b %d1,(CTRL0_B6_PRESSED)
-    .else
-        move.b %d1,(CTRL0_B6_PRESSED)
-    .endif
+    move.b %d1,(CTRL0_B6_PRESSED)
     
     /* clear released */
     clr.b (CTRL0_B6_RELEASED)
@@ -362,7 +353,7 @@ MyAirJumpDashCheck:
 .sixbuttonairjumpdash:
 
     /* check piss mode, too */
-    jsr 0x5CFF0 /*CheckPissMode*/
+    bsr CheckPissMode
 
     /* Z */
     btst #0,(CTRL0_B6_RELEASED)
@@ -452,17 +443,19 @@ MyCopyControls:
     move.b %d0, (CTRL0_B6_PRESSED)
     
     .ifdef MODE_TOGGLE
-        /* if holding X down, mark that in CTRL0_B6_RELEASED*/
+        /* toggle piss mode if held X != LAST_COPIED_HOLD_X */
+
         move.b (CTRL0_B6_DOWN),%d0
-        andi.b #0x04,%d0
-        lsl.b #3,%d0
-        or.b %d0,(CTRL0_B6_RELEASED)
+        eor.b %d0,(LAST_COPIED_HOLD_X)
+        btst #2,(LAST_COPIED_HOLD_X) /* ^ X */
         
-        /* toggle piss mode */
-        btst #4,(CTRL0_B6_RELEASED)
         beq .skiptogglepiss
         eori.b #0x2,(PISS_MODE+1)
     .skiptogglepiss:
+    
+        /* copy X to LAST_COPIED_HOLD_X */
+        move.b (CTRL0_B6_DOWN),%d0
+        move.b %d0,(LAST_COPIED_HOLD_X)
     .endif
     
     move.b (CTRL0_B6_DOWN),%d0
@@ -987,7 +980,7 @@ ScreenDMAListEnd:
     CheckPissColour:
         btst #7,(CTRL0_B6_RELEASED)
         beq .orgCheckPissColour
-        btst #5,(CTRL0_B6_RELEASED)
+        btst #2,(LAST_COPIED_HOLD_X) /* holding x? */
         beq .orgCheckPissColour
         tst.w (PISS_MODE)
         bne .getbe
@@ -1012,12 +1005,13 @@ FloatingDash:
     
 .sixbuttonfloatingdash:
     /* Z */
+    bsr CheckPissMode
     btst #0,(CTRL0_B6_RELEASED)
     bne .yesfloatingdash
     
     .ifndef RETAIN_ORIGINAL
-.nofloatingdash:
-    jmp 0x1A01A
+    .nofloatingdash:
+        jmp 0x1A01A
     .endif
    
 .threebuttonfloatingdash:
