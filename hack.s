@@ -147,6 +147,11 @@ PATCH_BEGIN piss_mode_yellow_xor_x
 PATCH_END piss_mode_yellow_xor_x
 .endif
 
+.org 0x19F70
+PATCH_BEGIN floating_dash
+    jsr 0x5D540
+PATCH_END floating_dash
+
 .org 0x1f3e6
 PATCH_BEGIN test_screen_patch
     jmp 0x5D3C8
@@ -975,7 +980,7 @@ ScreenDMAListEnd:
             .long 0xE6E700E8
             .long 0x00E0E1FF
         .else
-            .long 0x0102FF00
+            .byte 0xFF
         .endif
         
     .org 0x5D500
@@ -999,4 +1004,27 @@ ScreenDMAListEnd:
         tst.w (PISS_MODE)
         rts
 .endif
+
+.org 0x5D540
+FloatingDash:
+    btst #7,(CTRL0_B6_RELEASED)
+    beq .threebuttonfloatingdash
+    
+.sixbuttonfloatingdash:
+    /* Z */
+    btst #0,(CTRL0_B6_RELEASED)
+    bne .yesfloatingdash
+    
+    .ifndef RETAIN_ORIGINAL
+.nofloatingdash:
+    jmp 0x1A01A
+    .endif
+   
+.threebuttonfloatingdash:
+    btst #5,0x006A(%a5)
+    jmp 0x19F76
+    
+.yesfloatingdash:
+    jmp 0x19F7A
+    
 PATCH_END_injected_code:
