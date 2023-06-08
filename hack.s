@@ -94,9 +94,14 @@ PATCH_END jump_to_subroutine
     PATCH_END new_password_text
     
 .org 0xA7A6
-    PATCH_BEGIN
-    jmp 0x5D5A0
-    PATCH_END
+    PATCH_BEGIN password_confirm_1
+    jsr 0x5D5A0
+    PATCH_END password_confirm_1
+    
+.org 0xA7EA
+    PATCH_BEGIN password_confirm_2
+    jsr 0x5D5A0
+    PATCH_END password_confirm_2
 
 .org 0x15168
 PATCH_BEGIN pit_mode_buttons
@@ -1057,13 +1062,7 @@ FloatingDash:
         move.b (CTRL0_PRESSED),%d0
         andi.b #0x70,%d0
         tst.b %d0
-        bne .yespassword
-        
-    .nopassword:
-        jmp 0xA7DA
-    
-    .yespassword:
-        jmp 0xA7AE    
+        rts
         
 .org 0x5D5C0
     PasswordText:
