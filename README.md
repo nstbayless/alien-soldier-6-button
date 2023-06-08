@@ -1,4 +1,4 @@
-# 6-Button Controller Support for Alien Soldier (v1.2)
+# 6-Button Controller Support for Alien Soldier (v1.3)
 
 *By NaOH, with contributions from TwistC and MiniMacro*
 
@@ -12,7 +12,7 @@ The recommended variant is `alien-soldier-6-button-toggle.ips`, but if you are p
 - You can now perform the "Counter Force" parry manoeuvre by pressing Y. (Double-tap B no longer parries in 6-button mode.)
 - You can now toggle shoot modes by pressing X or Mode at any time. (Down+A no longer swaps shoot mode in 6-button mode.)
 - The new controls are displayed in the "control test" screen, assuming a 6-button controller is inserted.
-- On the password input screen, pressing up now increments the number and down decrements.
+- On the password input screen, pressing up now increments the number and down decrements. Furthermore, A, B, or C can now all be used to confirm password.
 - Bypasses internal checksum verification and region lock.
 
 ## Variants
@@ -31,6 +31,11 @@ You can apply the patch using FLIPS or any other IPS patcher.
 The assembly and build scripts for this hack are available on GitHub. Please take a look: https://github.com/nstbayless/alien-soldier-6-button
 
 ## Changelog
+
+v1.3
+
+    - fixed demo (was broken in v1.1)
+    - password entry can confirm with a, b, or c (instead of just c as in the base game)
 
 v1.2
 

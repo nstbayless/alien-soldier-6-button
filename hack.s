@@ -88,6 +88,16 @@ PATCH_END jump_to_subroutine
     moveq #-1,%d0
     PATCH_END fix_password_dir_down
 
+.org 0xA774
+    PATCH_BEGIN new_password_text
+    lea 0x5D5C0,%a0
+    PATCH_END new_password_text
+    
+.org 0xA7A6
+    PATCH_BEGIN
+    jmp 0x5D5A0
+    PATCH_END
+
 .org 0x15168
 PATCH_BEGIN pit_mode_buttons
     jmp 0x5D020
@@ -120,7 +130,7 @@ PATCH_END air_hang_dash_check
 
 .org 0x1615C
 PATCH_BEGIN air_hang_piss_mode_check
-    jmp 0x5CF90
+    jmp 0x5CFA0
 PATCH_END air_hang_piss_mode_check
 
 .org 0x1654E
@@ -439,9 +449,11 @@ MyCopyControls:
     move.b 0xFFF706,0x69(%a5)
     move.b 0xFFF708,0x6A(%a5)
 
-    clr.b (CTRL0_B6_RELEASED)    
-    btst #7,(CTRL0_B6_DOWN)
+    clr.b (CTRL0_B6_RELEASED)
+    btst #7,(CTRL0_B6_DOWN) /* 6-button plugged in? */
     beq .skipcopyb6
+    btst #6,(CTRL0_B6_PRESSED) /* not in demo? */
+    bne .skipcopyb6
     
     /* RELEASED is where we will check for PRESSED from now on, stupidly. */
     move.b (CTRL0_B6_PRESSED),(CTRL0_B6_RELEASED)
@@ -482,7 +494,7 @@ MyCopyControls:
 .skipcopyb6:
     rts
     
-.org 0x5CF90
+.org 0x5CFA0
 MyHangPissModeCheck:
     btst #7,(CTRL0_B6_RELEASED)
     beq .threebuttonhangpissmode
@@ -1039,5 +1051,27 @@ FloatingDash:
         btst #1,0x69(%a5)
         jmp 0x19EA8
 .endif
+
+.org 0x5D5A0
+    PasswordConfirm:
+        move.b (CTRL0_PRESSED),%d0
+        andi.b #0x70,%d0
+        tst.b %d0
+        bne .yespassword
+        
+    .nopassword:
+        jmp 0xA7DA
+    
+    .yespassword:
+        jmp 0xA7AE    
+        
+.org 0x5D5C0
+    PasswordText:
+        /* copied from $a932 */
+        .long 0x021A1C0F
+        .long 0x1D1D000B
+        .long 0x26000C26
+        .long 0x00191C00
+        .long 0x0DFF00FF
     
 PATCH_END_injected_code:
