@@ -57,6 +57,12 @@ CTRL1_CTRL = 0x00A10009
     jsr  0x05CB78 /*SubroutineInit*/
     PATCH_END read_controller_init
 
+/* fixes left+right triggering select somehow? */
+.org 0x33ee
+    PATCH_BEGIN ignore_0D_check
+    jmp 0x3424
+    PATCH_END ignore_0D_check
+
 /* skip reading p2 input */
 
 /*

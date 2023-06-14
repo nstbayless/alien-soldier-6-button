@@ -1,6 +1,6 @@
-# 6-Button Controller Support for Alien Soldier (v1.3)
+# 6-Button Controller Support for Alien Soldier (v1.4)
 
-*By NaOH, with contributions from TwistC and MiniMacro*
+*By NaOH, with contributions from TwistC, MiniMacro, and Ti*
 
 ## Functionality
 
@@ -32,6 +32,10 @@ The assembly and build scripts for this hack are available on GitHub. Please tak
 
 ## Changelog
 
+v1.4
+    
+    - fixed error some keyboard users encountered where left+right at the same time triggered a mode button press (thanks, Ti!)
+
 v1.3
 
     - fixed demo (was broken in v1.1)
@@ -56,7 +60,7 @@ JP ROM:
 
 ## Credits
 
-- ASM Hacking: NaOH
+- ASM Hacking: NaOH, Ti
 - Graphics: MiniMacro
 - Design: TwistC
 - Beta Testing: TwistC, Smedis2
